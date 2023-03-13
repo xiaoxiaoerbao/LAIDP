@@ -1,4 +1,4 @@
-package demography;
+package main.demography;
 
 public class Default {
 

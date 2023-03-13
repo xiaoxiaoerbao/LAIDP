@@ -1,4 +1,4 @@
-package demography;
+package main.demography;
 
 /**
  * A deme always has at least one epoch.

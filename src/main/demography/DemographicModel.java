@@ -1,4 +1,4 @@
-package demography;
+package main.demography;
 
 import java.util.ArrayList;
 import java.util.List;
