@@ -1,4 +1,4 @@
-package demography;
+package main.demography;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -7,10 +7,6 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import com.google.common.base.Joiner;
 import com.google.common.primitives.Ints;
-import main.demography.Deme;
-import main.demography.DemographicModel;
-import main.demography.Epoch;
-import main.demography.Pulse;
 import main.evaluation.LocalAncestry;
 import main.runner.*;
 import main.simulation.Simulation;
@@ -153,8 +149,7 @@ public class DemographicModelTools {
 
     private static List<Pulse> getPulses(String[] sourcePop, String destPop,
                                          double[] admixtureProportion, int[] admixtureTime){
-        List<String> sourcePopList = new ArrayList<>();
-        sourcePopList.addAll(Arrays.asList(sourcePop));
+        List<String> sourcePopList = new ArrayList<>(Arrays.asList(sourcePop));
         List<Double> admixtureProportionList = new ArrayList<>();
         for (double proportion : DemographicModelTools.transform_proportion(admixtureProportion)){
             admixtureProportionList.add(proportion);
@@ -674,7 +669,7 @@ public class DemographicModelTools {
 
         final String[] DIRS = {"001_parameterFile","002_demes","003_simulation","004_runner","log",
                 "005_evaluation"};
-        final String[] SOFTWARE = {"loter","elai","laidp"};
+        final String[] SOFTWARE = {"loter","elai","mosaic","laidp"};
 
         File[] dirsFile = new File[DIRS.length];
         for (int i = 0; i < dirsFile.length; i++) {

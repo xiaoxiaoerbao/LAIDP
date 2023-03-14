@@ -11,5 +11,5 @@ package main.utils;
  * @author Fei Lu
  */
 public enum IOFileFormat {
-    Binary, Text, TextGzip, HDF5
+    Text, TextGzip
 }

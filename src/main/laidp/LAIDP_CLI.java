@@ -1,8 +1,7 @@
 package main.laidp;
 
-import demography.DemographicModelTools;
+import main.demography.DemographicModelTools;
 import main.utils.Benchmark;
-import main.utils.MD5;
 import org.apache.commons.cli.*;
 
 import java.util.BitSet;

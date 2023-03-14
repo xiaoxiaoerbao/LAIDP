@@ -6,7 +6,6 @@
 
 package main.utils;
 
-
 import com.google.common.base.Splitter;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,8 +39,7 @@ public class PStringUtils {
      * @return 
      */
     public static List<String> fastSplit (String line) {
-        List<String> ls = fastSplit(line, "\t");
-        return ls;
+        return fastSplit(line, "\t");
     }
 
     
