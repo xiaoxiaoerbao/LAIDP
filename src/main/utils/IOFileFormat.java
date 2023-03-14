@@ -8,7 +8,7 @@ package main.utils;
 
 /**
  * Basic IO format used in this package
- * @author Fei Lu
+ * @author daxing
  */
 public enum IOFileFormat {
     Text, TextGzip

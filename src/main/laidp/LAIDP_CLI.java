@@ -147,7 +147,8 @@ public class LAIDP_CLI {
     }
 
     public static void main(String[] args) {
-        String dir = "/Users/xudaxing/Desktop/LAIDP_development/twoWay_recent_test";
-        DemographicModelTools.evaluate_contingencyTable(DemographicModelTools.N_way.TWO_WAY, dir);
+//        String dir = "/Users/xudaxing/Desktop/LAIDP_development/twoWay_recent_test";
+//        DemographicModelTools.evaluate_contingencyTable(DemographicModelTools.N_way.TWO_WAY, dir);
+        LAIDP_CLI.startFromCLI(args);
     }
 }

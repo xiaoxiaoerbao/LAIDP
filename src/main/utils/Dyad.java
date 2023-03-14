@@ -11,7 +11,7 @@ import cern.colt.function.IntComparator;
 
 /**
  *
- * @author feilu
+ * @author daxing
  * @param <T>
  * @param <S>
  */

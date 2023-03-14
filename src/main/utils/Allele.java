@@ -3,7 +3,7 @@ package main.utils;
 /**
  * Class holding allele and its basic information
  * Basic information are stored in bits
- * @author feilu
+ * @author daxing
  */
 public class Allele {
     byte baseVal = -1;
