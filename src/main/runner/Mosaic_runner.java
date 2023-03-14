@@ -1,15 +1,14 @@
 package main.runner;
 
-import daxing.common.sh.CommandUtils;
-import daxing.common.utiles.IOTool;
-import daxing.v2.localAncestryInfer.evaluation.LocalAncestry;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import pgl.infra.utils.Benchmark;
-import pgl.infra.utils.PStringUtils;
-
+import main.evaluation.LocalAncestry;
+import main.utils.Benchmark;
+import main.utils.CommandUtils;
+import main.utils.IOTool;
+import main.utils.PStringUtils;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -312,7 +311,8 @@ public class Mosaic_runner extends LocalAncestry {
             sb.append("-m ").append(this.coresNumber).append(" ");
             sb.append("-c ").append(genotypeMetaData.chrID[i]).append(":").append(genotypeMetaData.chrID[i]);
             int finalI = i;
-            callableList.add(()-> CommandUtils.runOneCommand(sb.toString(), workingDir[finalI].getAbsolutePath(), new File(logFile)));
+            callableList.add(()-> CommandUtils.runOneCommand(sb.toString(), workingDir[finalI].getAbsolutePath(),
+                    new File(logFile)));
         }
 
         List<Integer> results = CommandUtils.run_commands(callableList, coresNumber*2);

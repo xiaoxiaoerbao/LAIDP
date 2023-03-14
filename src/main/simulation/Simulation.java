@@ -1,12 +1,11 @@
 package main.simulation;
 
-import daxing.common.sh.CommandUtils;
-import daxing.common.utiles.IOTool;
 import it.unimi.dsi.fastutil.ints.IntList;
+import main.utils.Benchmark;
+import main.utils.CommandUtils;
+import main.utils.IOTool;
+import main.utils.PStringUtils;
 import org.apache.commons.lang3.StringUtils;
-import pgl.infra.utils.Benchmark;
-import pgl.infra.utils.PStringUtils;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -224,7 +223,7 @@ public class Simulation {
             sb.append(this.getSampleSizeOfAdmixedPop(i)).append(",");
             sb.append(this.getSampleSizeOfNativePop(i)).append(",");
             sb.append(StringUtils.join(this.getSampleSizeOfIntrogressedPop(i), ","));
-            callableList.add(()->CommandUtils.runOneCommand(sb.toString(), this.getOutDir(),
+            callableList.add(()-> CommandUtils.runOneCommand(sb.toString(), this.getOutDir(),
                     new File(this.getLogFile())));
         }
         List<Integer> results = CommandUtils.run_commands(callableList, this.getThreadsNum());

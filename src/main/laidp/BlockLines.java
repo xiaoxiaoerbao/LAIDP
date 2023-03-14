@@ -1,9 +1,8 @@
 package main.laidp;
 
-import daxing.common.bisnp.SNP;
-import pgl.infra.utils.Dyad;
-import pgl.infra.utils.PStringUtils;
-
+import main.utils.Dyad;
+import main.utils.PStringUtils;
+import main.utils.SNP;
 import java.util.BitSet;
 import java.util.List;
 import java.util.concurrent.Callable;

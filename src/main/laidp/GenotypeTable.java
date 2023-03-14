@@ -1,25 +1,13 @@
 package main.laidp;
 
 import com.google.common.primitives.Doubles;
-import daxing.common.bisnp.SNP;
-import daxing.common.chrrange.ChrPos;
-import daxing.common.utiles.ArrayTool;
-import daxing.common.utiles.IOTool;
-import gnu.trove.iterator.TIntIterator;
-import gnu.trove.set.TIntSet;
-import gnu.trove.set.hash.TIntHashSet;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
-import org.apache.commons.lang.ArrayUtils;
+import it.unimi.dsi.fastutil.ints.*;
+import main.utils.*;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.math3.stat.StatUtils;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
-import pgl.PGLConstraints;
-import pgl.infra.dna.allele.AlleleEncoder;
-import pgl.infra.utils.Benchmark;
-import pgl.infra.utils.PStringUtils;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -61,7 +49,7 @@ public class GenotypeTable {
             for (int i = 9; i < l.size(); i++) {
                 taxa[i-9] = l.get(i);
             }
-            ExecutorService pool = Executors.newFixedThreadPool(PGLConstraints.parallelLevel);
+            ExecutorService pool = Executors.newFixedThreadPool(32);
             List<Future<BlockLines>> resultList = new ArrayList<>();
             int siteCount = 0;
             int startIndex = 0;
@@ -231,7 +219,7 @@ public class GenotypeTable {
     }
 
     public byte getAlleleByte(int siteIndex, int taxonIndex){
-        if(this.isMissing(siteIndex, taxonIndex)) return AlleleEncoder.genotypeMissingByte;
+        assert this.isMissing(siteIndex, taxonIndex) : "missing are not allowed, please do imputation first";
         byte referenceAlleleByte = this.getSnps()[siteIndex].getReferenceAlleleByte();
         byte alternativeAlleleByte = this.getSnps()[siteIndex].getAlternativeAlleleByte();
         return isAlternativeAllele(siteIndex, taxonIndex) ? alternativeAlleleByte : referenceAlleleByte;
@@ -852,16 +840,16 @@ public class GenotypeTable {
             successiveWindow_taxon[i] = new ArrayList<>();
         }
         int windowNum = source[0].length;
-        TIntSet introgressionWindowIndexSet;
+        IntSet introgressionWindowIndexSet;
         for (int taxonIndex = 0; taxonIndex < source.length; taxonIndex++) {
-            introgressionWindowIndexSet = new TIntHashSet();
+            introgressionWindowIndexSet = new IntArraySet();
             for (int windowIndex = 0; windowIndex < windowNum; windowIndex++) {
                 if (source[taxonIndex][windowIndex] > 1){
                     introgressionWindowIndexSet.add(windowIndex);
                 }
             }
-            TIntSet resultIndexSet =  new TIntHashSet(introgressionWindowIndexSet);
-            TIntIterator intIterator = introgressionWindowIndexSet.iterator();
+            IntSet resultIndexSet =  new IntArraySet(introgressionWindowIndexSet);
+            IntIterator intIterator = introgressionWindowIndexSet.iterator();
             while (intIterator.hasNext()){
                 int index = intIterator.next();
                 int i = 1;
@@ -875,7 +863,7 @@ public class GenotypeTable {
             if (resultIndexSet.size()==0) continue;
 
             // introgression window index set to sorted arrat
-            int[] resultIndexArray = resultIndexSet.toArray();
+            int[] resultIndexArray = resultIndexSet.toIntArray();
             Arrays.sort(resultIndexArray);
 
             // int[2] start end represent successive introgression window index

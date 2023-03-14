@@ -1,7 +1,10 @@
 package main.laidp;
 
+import demography.DemographicModelTools;
+import main.utils.Benchmark;
+import main.utils.MD5;
 import org.apache.commons.cli.*;
-import pgl.infra.utils.Benchmark;
+
 import java.util.BitSet;
 
 public class LAIDP_CLI {
@@ -66,7 +69,7 @@ public class LAIDP_CLI {
     }
 
     public void startRun(){
-        GenotypeTable genotypeTable = new GenotypeTable(genotypeFile);
+        main.laidp.GenotypeTable genotypeTable = new main.laidp.GenotypeTable(genotypeFile);
         BitSet[] ancestralAlleleBitSet = genotypeTable.getAncestralAlleleBitSet(ancestralAllele);
         BitSet[][] localAnc = genotypeTable.calculateLocalAncestry(windowSize, stepSize, taxaGroupFile,
                 ancestralAlleleBitSet, conjunctionNum, switchCostScore, maxSolutionCount, threadsNum);
@@ -145,6 +148,7 @@ public class LAIDP_CLI {
     }
 
     public static void main(String[] args) {
-        System.out.println("start");
+        String dir = "/Users/xudaxing/Desktop/LAIDP_development/twoWay_recent_test";
+        DemographicModelTools.evaluate_contingencyTable(DemographicModelTools.N_way.TWO_WAY, dir);
     }
 }

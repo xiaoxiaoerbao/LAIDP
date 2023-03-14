@@ -1,11 +1,10 @@
 package main.runner;
 
-import daxing.common.utiles.IOTool;
-import daxing.v2.localAncestryInfer.simulation.SimulationMetadata;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import pgl.infra.utils.PStringUtils;
-
+import main.simulation.SimulationMetadata;
+import main.utils.IOTool;
+import main.utils.PStringUtils;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;

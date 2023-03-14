@@ -2,12 +2,12 @@ package main.evaluation;
 
 import com.google.common.base.Joiner;
 import com.google.common.primitives.Ints;
-import daxing.common.sh.CommandUtils;
-import daxing.common.utiles.IOTool;
-import daxing.v2.localAncestryInfer.laidp.GenotypeTable;
-import daxing.v2.localAncestryInfer.simulation.SimulationMetadata;
+import main.laidp.GenotypeTable;
+import main.simulation.SimulationMetadata;
+import main.utils.CommandUtils;
+import main.utils.IOTool;
+import main.utils.PStringUtils;
 import org.apache.commons.math3.stat.correlation.PearsonsCorrelation;
-import pgl.infra.utils.PStringUtils;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

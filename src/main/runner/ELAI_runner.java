@@ -1,14 +1,13 @@
 package main.runner;
 
-import daxing.common.sh.CommandUtils;
-import daxing.common.utiles.IOTool;
-import daxing.v2.localAncestryInfer.evaluation.LocalAncestry;
-import daxing.v2.localAncestryInfer.laidp.GenotypeTable;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
-import pgl.infra.utils.Benchmark;
-import pgl.infra.utils.PStringUtils;
-
+import main.evaluation.LocalAncestry;
+import main.laidp.GenotypeTable;
+import main.utils.Benchmark;
+import main.utils.CommandUtils;
+import main.utils.IOTool;
+import main.utils.PStringUtils;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -270,7 +269,8 @@ public class ELAI_runner extends LocalAncestry {
                 sb.append("-mg ").append(genotypeMetaData.timeSinceAdmixture[i]);
             }
             int finalI = i;
-            callableList.add(()-> CommandUtils.runOneCommand(sb.toString(), workingDir[finalI].getAbsolutePath(), new File(logFilePath)));
+            callableList.add(()-> CommandUtils.runOneCommand(sb.toString(), workingDir[finalI].getAbsolutePath(),
+                    new File(logFilePath)));
         }
 
         List<Integer> results = CommandUtils.run_commands(callableList, threadsNum);
@@ -372,7 +372,7 @@ public class ELAI_runner extends LocalAncestry {
                         ancestryPopIndex = j % genotypeMetaData.nWayAdmixture[i];
                         snpIndex  = j / genotypeMetaData.nWayAdmixture[i];
                         inferredValue = Double.parseDouble(temp.get(j));
-                        ancestryValue = inferredValue > 0.5 ? true : false;
+                        ancestryValue = inferredValue > 0.5;
                         localAncestry[i][haplotypeIndex][ancestryPopIndex].set(snpIndex, ancestryValue);
                     }
                     br.readLine();
