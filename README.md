@@ -1,6 +1,6 @@
 ## Introduction
 
-LAIDP is a software for local ancestry inference(LAI). Compare to other softwares, it have two advatanges.
+`LAIDP` is a software for local ancestry inference(LAI). Compare to other softwares, it have two advatanges.
 - Recombination rate map is not required
 - Have a high accuracy when infer ancient admixture (> 500 generations)
 
