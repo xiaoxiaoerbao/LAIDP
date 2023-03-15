@@ -1,12 +1,12 @@
 ## Introduction
 
-`LAIDP` is a software for local ancestry inference(LAI). Compare to other softwares, it have two advatanges.
-- Recombination rate map is not required
-- Have a high accuracy when infer ancient admixture (> 500 generations)
+`LAIDP` is a software for local ancestry inference(LAI) that offers two main advantages compare to other software: 
+it does not required a recombination rate map, and it achieves high accuracy in inferring ancient admixture events 
+(>500 generations).
 
 ## Cite
 
-Coming soon ...
+Citation information for LAIDP is coming soon.
 
 ## Input files
 
@@ -75,20 +75,21 @@ java -jar LAIDP.jar -g test.vcf -taxaGroup taxaGroup.txt -ancestral ancestralAll
 
 ## Output files
 
-LAIDP only have one output file, localAnc.txt. 
+LAIDP generates only one output file, localAnc.txt. Below is an example of a two-way admixture file:
 
-Two-way admixture示例文件如下
+
 | pos | tsk_0 | tsk_1 | tsk_2 |
 |-----|-------|-------|-------|
 |2|1,0|0,1|1,0|
 |5|1,0|0,1|1,0|
 |7|1,0|0,1|1,0|
 
-pos列对应每个variant的位置，后序列表示每个样本的ancestry信息。ancestry 信息用[NATIVE,INTROGRESSED_1,INTROGRESSED_2,...]表示。
+The `pos` column corresponds to the position of each variant, and the subsequent columns indicate the ancestry 
+information for each sample. Ancestry information is represented as [NATIVE, INTROGRESSED_1, INTROGRESSED_2,...], where:
 
-`1,0` 表示native ancestry
-`0,1` 表示INTROGRESSED_1 ancestry
-`0,0,1`表示INTROGRESSED_2 ancestry
+`1,0` 表示native ancestry,
+`0,1` 表示INTROGRESSED_1 ancestry,
+`0,0,1`表示INTROGRESSED_2 ancestry.
 ...
 
 ## Parameter
