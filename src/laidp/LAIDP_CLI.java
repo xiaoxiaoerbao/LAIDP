@@ -145,21 +145,6 @@ public class LAIDP_CLI {
     }
 
     public static void main(String[] args) {
-//        String dir = "/Users/xudaxing/Desktop/LAIDP_development/twoWay_recent_test";
-//        DemographicModelTools.evaluate_contingencyTable(DemographicModelTools.N_way.TWO_WAY, dir);
-//        LAIDP_CLI.startFromCLI(args);
-        String genotypeFile = "/Users/xudaxing/Desktop/LAIDP_development/twoWay_recent/003_simulation/D004.vcf";
-        int windowSize = 200;
-        int stepSize = 100;
-        String taxaGroupFile = "/Users/xudaxing/Desktop/LAIDP_development/twoWay_recent/004_runner/laidp/D004/D004.taxaGroup.txt";
-        String ancestryAllele = "simulation";
-        int conjunctionNum = 2;
-        double switchCostScore = 1.5;
-        int maxSolutionCount = 32;
-        String localAnceOutFile = "/Users/xudaxing/Desktop/LAIDP_development/twoWay_recent/004_runner/laidp/D004/D004" +
-                ".localAnc_2.txt";
-        int threadsNum = 2;
-        GenotypeTable.run_LAIDP(genotypeFile, windowSize, stepSize, taxaGroupFile, ancestryAllele, conjunctionNum,
-                switchCostScore, maxSolutionCount, localAnceOutFile, threadsNum);
+        LAIDP_CLI.startFromCLI(args);
     }
 }
