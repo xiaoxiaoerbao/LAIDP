@@ -2,7 +2,6 @@ package laidp;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Map;
@@ -18,8 +17,8 @@ public enum Source {
     INTROGRESSED_4(4, 0b10000),
     ADMIXED(5, 0b100000);
 
-    private int index;
-    private int feature;
+    private final int index;
+    private final int feature;
 
     Source(int index, int feature) {
         this.index=index;
@@ -32,15 +31,6 @@ public enum Source {
 
     public int getIndex() {
         return index;
-    }
-
-    public static int addSourceFeature(int feature0, int feature1){
-        return feature0 | feature1;
-    }
-
-    public void setSourceFeature(Source source){
-        int resFeature = this.feature | source.feature;
-        this.feature=resFeature;
     }
 
     private static final Map<Integer, Source> indexToEnumMap =

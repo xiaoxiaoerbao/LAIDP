@@ -3,7 +3,6 @@ package laidp;
 import utils.Dyad;
 import utils.PStringUtils;
 import utils.SNP;
-
 import java.util.BitSet;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -77,7 +76,6 @@ public class BlockLines implements Callable<BlockLines> {
                 genoSite[0].set(i);
             }
         }
-        Dyad<SNP, BitSet[]> d = new Dyad<>(snp, genoSite);
-        return d;
+        return new Dyad<>(snp, genoSite);
     }
 }

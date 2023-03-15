@@ -2,7 +2,6 @@ package laidp;
 
 import utils.Benchmark;
 import org.apache.commons.cli.*;
-
 import java.util.BitSet;
 
 public class LAIDP_CLI {

@@ -4,12 +4,10 @@ import com.google.common.primitives.Doubles;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.ints.*;
-import main.utils.*;
+import utils.*;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.math3.stat.StatUtils;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
-import utils.*;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -851,13 +849,11 @@ public class GenotypeTable {
                 }
             }
             IntSet resultIndexSet =  new IntArraySet(introgressionWindowIndexSet);
-            IntIterator intIterator = introgressionWindowIndexSet.iterator();
-            while (intIterator.hasNext()){
-                int index = intIterator.next();
+            for (int index : introgressionWindowIndexSet) {
                 int i = 1;
-                while (i <= conjunctionNum){
+                while (i <= conjunctionNum) {
                     resultIndexSet.add(Math.max(index - i, 0));
-                    resultIndexSet.add(Math.min(index+i, windowNum-1));
+                    resultIndexSet.add(Math.min(index + i, windowNum - 1));
                     i++;
                 }
             }

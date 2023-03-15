@@ -1,7 +1,6 @@
 package laidp;
 
 import it.unimi.dsi.fastutil.ints.*;
-
 import java.util.*;
 
 public class Solution {
