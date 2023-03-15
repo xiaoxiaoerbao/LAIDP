@@ -11,7 +11,7 @@ Citation information for LAIDP is coming soon.
 
 ### Genotype file
 
-Please note that the current version of the software only accepts haploid VCF files and does not allow missing genotype data. If you have diploid sample data, please first perform phasing and imputation using software such as Beagle, and then split the data into haploid format. We apologize for any inconvenience and appreciate your understanding.
+Attention: the current version only suitable for haploid VCF files without missing genotype data. For diploid sample data, please first perform phasing and imputation with Beagle or other software, then split the data into haploid format. Sorry for the inconvenience and appreciate your understanding.
 
 ### Taxa group file
 
