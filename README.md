@@ -87,9 +87,9 @@ LAIDP generates only one output file, localAnc.txt. Below is an example of a two
 The `pos` column corresponds to the position of each variant, and the subsequent columns indicate the ancestry 
 information for each sample. Ancestry information is represented as [NATIVE, INTROGRESSED_1, INTROGRESSED_2,...], where:
 
-`1,0` 表示native ancestry,
-`0,1` 表示INTROGRESSED_1 ancestry,
-`0,0,1`表示INTROGRESSED_2 ancestry.
+`1,0` represents native ancestry,
+`0,1` represents INTROGRESSED_1 ancestry, and
+`0,0,1`represents INTROGRESSED_2 ancestry.
 ...
 
 ## Parameter
