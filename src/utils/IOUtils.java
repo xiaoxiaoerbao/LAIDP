@@ -3,7 +3,6 @@ package utils;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.*;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -56,22 +55,6 @@ public class IOUtils {
             e.printStackTrace();
         }
         return br;
-    }
-    
-    public static List<File> getFileListInDirStartsWith (String inDirS, String startStr) {
-        File[] fs = new File(inDirS).listFiles();
-        fs = listFilesStartsWith(fs, startStr);
-        List<File> fList = new ArrayList<>(Arrays.asList(fs));
-        Collections.sort(fList);
-        return fList;
-    }
-    
-    public static File[] listFilesStartsWith (File[] fAll, String startStr) {
-        List<File> al = new ArrayList<>();
-        for (File file : fAll) {
-            if (file.getName().startsWith(startStr)) al.add(file);
-        }
-        return al.toArray(new File[0]);
     }
 
 }
