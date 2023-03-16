@@ -982,6 +982,7 @@ public class GenotypeTable {
                         sources = Source.getSourcesFrom(solution.getInt(k));
                         intervalStartIndex = solution.getInt(k+1)+fragmentStartIndex; // inclusive
                         intervalEndIndex = solution.getInt(k+2)+fragmentStartIndex; // inclusive
+                        if (sources.size() > 1) continue;
                         for (Source source : sources){
                             if (source.equals(Source.NATIVE)) continue;
                             localAncestry[admixedTaxonIndex][source.getIndex()].set(intervalStartIndex, intervalEndIndex+1);
@@ -1094,6 +1095,7 @@ public class GenotypeTable {
                     sources = Source.getSourcesFrom(solution.getInt(k));
                     intervalStartIndex = solution.getInt(k+1)+fragmentStartIndex; // inclusive
                     intervalEndIndex = solution.getInt(k+2)+fragmentStartIndex; // inclusive
+                    if (sources.size() > 1) continue;
                     for (Source source : sources){
                         if (source.equals(Source.NATIVE)) continue;
                         localAncestry[admixedTaxonIndex][source.getIndex()].set(intervalStartIndex, intervalEndIndex+1);

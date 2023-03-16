@@ -117,9 +117,10 @@ public class LAIDP_CLI {
     }
 
     private static String getFooter(){
-        return "Author: Daxing Xu, email: dxxu@genetics.ac.cn" + "\n" +
-                "See below for detailed documentation" + "\n" +
-                "https://github.com/";
+        return """
+                Author: Daxing Xu, email: dxxu@genetics.ac.cn
+                See below for detailed documentation
+                https://github.com/""";
     }
 
     public static void startFromCLI(String[] args){
@@ -145,6 +146,30 @@ public class LAIDP_CLI {
     }
 
     public static void main(String[] args) {
+//        String genotypeFile = "/Users/xudaxing/Desktop/LAIDP_development/twoWay_ancient_test/003_simulation/D006.vcf";
+//        int windowSize = 200;
+//        int stepSize = 100;
+//        String taxaGroupFile = "/Users/xudaxing/Desktop/LAIDP_development/twoWay_ancient_test/004_runner/laidp/D006/D006.taxaGroup.txt";
+//        String ancestryAllele = "simulation";
+//        int conjunctionNum = 2;
+//        double switchCostScore = 1.5;
+//        int maxSolutionCount = 32;
+//        String localAnceOutFile = "/Users/xudaxing/Desktop/LAIDP_development/twoWay_ancient_test/004_runner/laidp" +
+//                "/D006/D006.localAnc.txt";
+//        int threadsNum = 2;
+
+//        String genotypeFile = args[0];
+//        int windowSize = Integer.parseInt(args[1]);
+//        int stepSize = Integer.parseInt(args[2]);
+//        String taxaGroupFile = args[3];
+//        String ancestryAllele = args[4];
+//        int conjunctionNum = Integer.parseInt(args[5]);
+//        double switchCostScore = Double.parseDouble(args[6]);
+//        int maxSolutionCount = Integer.parseInt(args[7]);
+//        String localAnceOutFile = args[8];
+//        int threadsNum = Integer.parseInt(args[9]);
+//        GenotypeTable.run_LAIDP(genotypeFile, windowSize, stepSize, taxaGroupFile, ancestryAllele, conjunctionNum,
+//                switchCostScore, maxSolutionCount, localAnceOutFile, threadsNum);
         LAIDP_CLI.startFromCLI(args);
     }
 }
