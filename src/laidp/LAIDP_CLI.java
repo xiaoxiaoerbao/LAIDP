@@ -117,10 +117,7 @@ public class LAIDP_CLI {
     }
 
     private static String getFooter(){
-        return """
-                Author: Daxing Xu, email: dxxu@genetics.ac.cn
-                See below for detailed documentation
-                https://github.com/""";
+        return "Author: Daxing Xu, email: dxxu@genetics.ac.cn\nSee below for detailed documentation\nhttps://github.com/xiaoxiaoerbao/LAIDP";
     }
 
     public static void startFromCLI(String[] args){
