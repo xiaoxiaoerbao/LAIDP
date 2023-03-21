@@ -1,6 +1,6 @@
 ## Introduction
 
-`LAIDP` is a software for local ancestry inference(LAI). Comparing with other software, LAPID has higher accuracy in 
+`LAIDP` is a software for local ancestry inference(LAI). Comparing with other software, LAIDP has higher accuracy in 
 inferring ancient admixture events (>500 generations) and no recombination rate map required.
 
 ## Cite

@@ -1117,6 +1117,83 @@ public class GenotypeTable {
      * @param conjunctionNum conjunctionNum
      * @param switchCostScore switchCostScore
      * @param threadsNum threadsNum
+     * @return BitSet[][] local ancestry, dim1 is admixed taxon index, dim2 is n_way admixture, index equal Source.index
+     */
+    public BitSet[][] calculateLocalAncestry_only_fd(int windowSize, int stepSize, String taxaGroupFile,
+                                                          BitSet[] ancestralAlleleBitSet, int conjunctionNum,
+                                                          double switchCostScore, int maxSolutionCount, int threadsNum){
+        int variantsNum = this.getSiteNumber();
+        TaxaGroup taxaGroup = TaxaGroup.buildFrom(taxaGroupFile);
+        int n_wayAdmixture = taxaGroup.getIntrogressedPopTaxa().length + 1;
+
+        int[] admixedTaxaIndices = this.getTaxaIndices(taxaGroup.getTaxaOf(Source.ADMIXED));
+        int[] nativeTaxaIndices = this.getTaxaIndices(taxaGroup.getTaxaOf(Source.NATIVE));
+        int[][] introgressedPopTaxaIndices = this.getTaxaIndices(taxaGroup.getIntrogressedPopTaxa());
+        int[][] native_admixed_introgressed_popIndex = this.getTaxaIndices(taxaGroup.getNative_admixed_introgressed_Taxa());
+        int[] native_introgressed_popIndex = this.getTaxaIndices(taxaGroup.getTaxaOf_native_introgressed());
+
+        int[] windowStartIndexArray = GenotypeTable.getWindowStartIndex(windowSize, stepSize, variantsNum);
+        double[][][] dxy_windows_admixed = this.calculateAdmixedDxy(admixedTaxaIndices, nativeTaxaIndices,
+                introgressedPopTaxaIndices, windowStartIndexArray, windowSize);
+        double[][] dxy_pairwise_nativeIntrogressed = this.calculatePairwiseDxy(nativeTaxaIndices,introgressedPopTaxaIndices,
+                windowStartIndexArray, windowSize);
+
+        double[][] dafs = this.calculateDaf(threadsNum, native_admixed_introgressed_popIndex, ancestralAlleleBitSet);
+        double[] dafs_native = dafs[0];
+        double[][] dafs_admixed = new double[taxaGroup.getTaxaOf(Source.ADMIXED).size()][];
+        System.arraycopy(dafs, 1, dafs_admixed, 0, taxaGroup.getTaxaOf(Source.ADMIXED).size());
+        double[][] dafs_introgressed = new double[taxaGroup.getIntrogressedPopTaxa().length][];
+        System.arraycopy(dafs, taxaGroup.getTaxaOf(Source.ADMIXED).size()+1, dafs_introgressed, 0,
+                taxaGroup.getIntrogressedPopTaxa().length);
+
+        double[][][] fd = GenotypeTable.calculate_fd(threadsNum, dafs_native, dafs_admixed, dafs_introgressed,
+                windowStartIndexArray,
+                windowSize, variantsNum);
+
+        double[][] d_f_z_sd = this.get_D_f_z_sd(threadsNum, taxaGroup, ancestralAlleleBitSet, false);
+        double[] f_upperLimit = GenotypeTable.get_upperLimit_f(d_f_z_sd);
+        int[][] gridSource = GenotypeTable.calculateSource(fd, dxy_pairwise_nativeIntrogressed,
+                dxy_windows_admixed, f_upperLimit);
+
+        BitSet[][] localAncestry = new BitSet[admixedTaxaIndices.length][];
+        for (int i = 0; i < admixedTaxaIndices.length; i++) {
+            localAncestry[i] = new BitSet[n_wayAdmixture];
+            for (int j = 0; j < localAncestry[i].length; j++) {
+                localAncestry[i][j] = new BitSet();
+            }
+            // initialize native ancestry to 1
+            localAncestry[i][0].set(0, variantsNum);
+        }
+
+        int sourceFeature, fragmentStartIndex, fragmentEndIndex;
+        Source source;
+        IntList singleSourceFeatureList = Source.getSingleSourceFeatureList();
+        for (int admixedTaxonIndex = 0; admixedTaxonIndex < admixedTaxaIndices.length; admixedTaxonIndex++) {
+            for (int windowIndex = 0; windowIndex < windowStartIndexArray.length; windowIndex++) {
+                sourceFeature = gridSource[admixedTaxonIndex][windowIndex];
+                if (sourceFeature == 1) continue;
+                if (singleSourceFeatureList.contains(sourceFeature)){
+                    source = Source.getInstanceFromFeature(sourceFeature).get();
+                    fragmentStartIndex = windowStartIndexArray[windowIndex]; // inclusive
+                    fragmentEndIndex = Math.min(windowStartIndexArray[windowIndex]+windowSize, variantsNum); // exclusive
+                    localAncestry[admixedTaxonIndex][source.getIndex()].set(fragmentStartIndex, fragmentEndIndex);
+                    localAncestry[admixedTaxonIndex][0].set(fragmentStartIndex, fragmentEndIndex, false);
+                }
+            }
+        }
+        return localAncestry;
+    }
+
+    /**
+     *
+     * @param windowSize The unit of window size is one variant, not base pairs (bp)
+     * @param stepSize The unit of step size is one variant, not base pairs (bp)
+     * @param taxaGroupFile taxaGroupFile
+     * @param ancestralAlleleBitSet dim1 is genotype(haploid), dim2 is missing.
+     * 1 in ancestralAlleleBitSet represent alternative allele is ancestral allele.
+     * @param conjunctionNum conjunctionNum
+     * @param switchCostScore switchCostScore
+     * @param threadsNum threadsNum
      * @param localAnceOutFile localAnceOutFile
      */
     public void calculateLocalAncestry_singleThread_tract(int windowSize, int stepSize, String taxaGroupFile,
@@ -1427,6 +1504,8 @@ public class GenotypeTable {
         BitSet[] ancestralAlleleBitSet = genotypeTable.getAncestralAlleleBitSet(ancestryAllele);
         BitSet[][] localAnc = genotypeTable.calculateLocalAncestry(windowSize, stepSize, taxaGroupFile,
                 ancestralAlleleBitSet, conjunctionNum, switchCostScore, maxSolutionCount, threadsNum);
+//        BitSet[][] localAnc = genotypeTable.calculateLocalAncestry_only_fd(windowSize, stepSize, taxaGroupFile,
+//                ancestralAlleleBitSet, conjunctionNum, switchCostScore, maxSolutionCount, threadsNum);
 //        BitSet[][] localAnc = genotypeTable.calculateLocalAncestry_singleThread(windowSize, stepSize, taxaGroupFile,
 //                ancestralAlleleBitSet, conjunctionNum, switchCostScore, maxSolutionCount, threadsNum);
         genotypeTable.write_localAncestry(localAnc, localAnceOutFile, taxaGroupFile);
