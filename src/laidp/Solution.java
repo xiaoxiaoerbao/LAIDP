@@ -300,13 +300,13 @@ public class Solution {
         List<IntList> solutionList = new ArrayList<>(solutionSet);
         if (solutionList.size()==0) return new IntArrayList();
         int[] targetSourceCumLen = Solution.getTargetSourceCumLen(solutionList);
-        int miniTargetSourceCumLen = Integer.MAX_VALUE;
+        int maxTargetSourceCumLen = Integer.MIN_VALUE;
         for (int j : targetSourceCumLen) {
-            miniTargetSourceCumLen = Math.min(j, miniTargetSourceCumLen);
+            maxTargetSourceCumLen = Math.max(j, maxTargetSourceCumLen);
         }
         IntList miniTargetSourceCumLenSolution=null;
         for (int i = 0; i < targetSourceCumLen.length; i++) {
-            if (targetSourceCumLen[i] == miniTargetSourceCumLen){
+            if (targetSourceCumLen[i] == maxTargetSourceCumLen){
                 miniTargetSourceCumLenSolution = solutionList.get(i);
                 break;
             }
