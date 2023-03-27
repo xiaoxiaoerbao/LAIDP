@@ -67,11 +67,11 @@ public class GenotypeTable {
                     lines = new ArrayList<>();
                 }
                 siteCount++;
-                if (siteCount%1000000 == 0) {
-                    sb.setLength(0);
-                    sb.append("Read in ").append(siteCount).append(" SNPs from ").append(haploidGenotypeFile);
-                    System.out.println(sb);
-                }
+//                if (siteCount%1000000 == 0) {
+//                    sb.setLength(0);
+//                    sb.append("Read in ").append(siteCount).append(" SNPs from ").append(haploidGenotypeFile);
+//                    System.out.println(sb);
+//                }
             }
             br.close();
             if (lines.size() != 0) {
@@ -90,10 +90,10 @@ public class GenotypeTable {
                     this.genoSite[block.getStartIndex() + j] = block.getGenoSiteBlock()[j];
                 }
             }
-            sb.setLength(0);
-            sb.append("A total of ").append(numberFormat.format(this.getSiteNumber())).append(" SNPs are in ").append(haploidGenotypeFile).append("\n");
-            sb.append("Genotype table is successfully built");
-            System.out.println(sb);
+//            sb.setLength(0);
+//            sb.append("A total of ").append(numberFormat.format(this.getSiteNumber())).append(" SNPs are in ").append(haploidGenotypeFile).append("\n");
+//            sb.append("Genotype table is successfully built");
+//            System.out.println(sb);
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -169,7 +169,7 @@ public class GenotypeTable {
     }
 
     private void transposeSiteToTaxon () {
-        long start = System.nanoTime();
+//        long start = System.nanoTime();
         genoTaxon = new BitSet[this.getTaxaNumber()][];
         for (int i = 0; i < genoTaxon.length; i++) {
             genoTaxon[i]=new BitSet[2];
@@ -186,7 +186,7 @@ public class GenotypeTable {
                 }
             }
         }
-        System.out.println("Transpose genoSite to genoTaxon takes " + Benchmark.getTimeSpanSeconds(start) + " seconds.");
+//        System.out.println("Transpose genoSite to genoTaxon takes " + Benchmark.getTimeSpanSeconds(start) + " seconds.");
     }
 
     public void transposeTaxonToSite () {
