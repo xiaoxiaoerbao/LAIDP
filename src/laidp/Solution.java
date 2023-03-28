@@ -218,6 +218,74 @@ public class Solution {
         return enumMap;
     }
 
+    /**
+     * loter-like or major vote
+     */
+    public static int[] getLoterSolution(BitSet[] srcGenotypeFragment,
+                                         BitSet queryGenotypeFragment,
+                                         int fragmentLength,
+                                         double switchCostScore,
+                                         List<String> srcIndiList,
+                                         Map<String, Source> taxaSourceMap,
+                                         int maxSolutionCount){
+        int[][] srcGenotype = new int[srcGenotypeFragment.length][fragmentLength];
+        int[] queryGenotype = new int[fragmentLength];
+        for (int i = 0; i < srcGenotype.length; i++) {
+            for (int j = srcGenotypeFragment[i].nextSetBit(0); j >= 0; j=srcGenotypeFragment[i].nextSetBit(j+1)) {
+                srcGenotype[i][j] = 1;
+            }
+        }
+        for (int i = queryGenotypeFragment.nextSetBit(0); i >= 0; i = queryGenotypeFragment.nextSetBit(i+1)) {
+            queryGenotype[i] = 1;
+        }
+
+
+        double[] switchCostScores = {1.5};
+        IntList[] candidateSolutions;
+        int[] solution;
+        List<int[]> solutions = new ArrayList<>();
+        int sourceFeature, start, end;
+        for (int i = 0; i < switchCostScores.length; i++) {
+            candidateSolutions = Solution.getCandidateSolution(srcGenotype, queryGenotype,
+                    switchCostScores[i], srcIndiList, taxaSourceMap);
+            for (int j = 0; j < candidateSolutions.length; j++) {
+                solution = new int[fragmentLength];
+                for (int k = 0; k < candidateSolutions[j].size(); k=k+3) {
+                    sourceFeature = candidateSolutions[j].get(k);
+                    start = candidateSolutions[j].get(k+2); // inclusive
+                    end = candidateSolutions[j].get(k+1); // inclusice
+                    Arrays.fill(solution, start, end+1, sourceFeature);
+                }
+                solutions.add(solution);
+            }
+        }
+        int solutionCount = solutions.size();
+        int[] finalSolution = new int[fragmentLength];
+        Int2IntMap countMap;
+        for (int posIndex = 0; posIndex < fragmentLength; posIndex++) {
+            int maxCount = -1;
+            int mode = -1;
+            countMap = new Int2IntArrayMap();
+            for (int solutionIndex = 0; solutionIndex < solutionCount; solutionIndex++) {
+                sourceFeature = solutions.get(solutionIndex)[posIndex];
+                int feature;
+                for (int i = 1; i <= sourceFeature; i<<=1) {
+                    feature = sourceFeature & i;
+                    if (feature == 0) continue;
+                    int count = countMap.getOrDefault(feature, 0) + 1;
+                    countMap.put(feature, count);
+                    if (count > maxCount){
+                        mode = feature;
+                        maxCount = count;
+                    }
+                }
+            }
+            finalSolution[posIndex] = mode;
+        }
+
+        return finalSolution;
+    }
+
     public static int getMiniOptimalSolutionSize(IntList[] solutions){
         int[] size = Solution.getOptimalSolutionsSize(solutions);
         int mini = Integer.MAX_VALUE;
@@ -338,23 +406,23 @@ public class Solution {
         List<IntList> solutionList = new ArrayList<>(solutionSet);
         if (solutionList.size()==0) return new IntArrayList();
         int[] targetSourceCumLen = Solution.getTargetSourceCumLen(solutionList);
-        int miniTargetSourceCumLen = Integer.MAX_VALUE;
+        int maxTargetSourceCumLen = Integer.MIN_VALUE;
         for (int j : targetSourceCumLen) {
-            miniTargetSourceCumLen = Math.min(j, miniTargetSourceCumLen);
+            maxTargetSourceCumLen = Math.max(j, maxTargetSourceCumLen);
         }
-        IntList miniTargetSourceCumLenSolution=null;
+        IntList maxTargetSourceCumLenSolution=null;
         for (int i = 0; i < targetSourceCumLen.length; i++) {
-            if (targetSourceCumLen[i] == miniTargetSourceCumLen){
-                miniTargetSourceCumLenSolution = solutionList.get(i);
+            if (targetSourceCumLen[i] == maxTargetSourceCumLen){
+                maxTargetSourceCumLenSolution = solutionList.get(i);
                 break;
             }
         }
         IntList solutionRes = new IntArrayList();
         int seqLen = solutionList.get(0).getInt(1);
-        for (int i = 0; i < miniTargetSourceCumLenSolution.size(); i=i+3) {
-            solutionRes.add(miniTargetSourceCumLenSolution.getInt(i));
-            solutionRes.add(seqLen-miniTargetSourceCumLenSolution.getInt(i+1));
-            solutionRes.add(seqLen-miniTargetSourceCumLenSolution.getInt(i+2));
+        for (int i = 0; i < maxTargetSourceCumLenSolution.size(); i=i+3) {
+            solutionRes.add(maxTargetSourceCumLenSolution.getInt(i));
+            solutionRes.add(seqLen-maxTargetSourceCumLenSolution.getInt(i+1));
+            solutionRes.add(seqLen-maxTargetSourceCumLenSolution.getInt(i+2));
         }
         return solutionRes;
     }
