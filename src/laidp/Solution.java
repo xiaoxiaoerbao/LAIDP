@@ -372,19 +372,19 @@ public class Solution {
         for (int j : targetSourceCumLen) {
             maxTargetSourceCumLen = Math.max(j, maxTargetSourceCumLen);
         }
-        IntList miniTargetSourceCumLenSolution=null;
+        IntList maxTargetSourceCumLenSolution=null;
         for (int i = 0; i < targetSourceCumLen.length; i++) {
             if (targetSourceCumLen[i] == maxTargetSourceCumLen){
-                miniTargetSourceCumLenSolution = solutionList.get(i);
+                maxTargetSourceCumLenSolution = solutionList.get(i);
                 break;
             }
         }
 
         IntList solutionRes = new IntArrayList();
-        for (int i = miniTargetSourceCumLenSolution.size()-1; i > 0; i=i-3) {
-            solutionRes.add(miniTargetSourceCumLenSolution.getInt(i-2));
-            solutionRes.add(miniTargetSourceCumLenSolution.getInt(i));
-            solutionRes.add(miniTargetSourceCumLenSolution.getInt(i-1));
+        for (int i = maxTargetSourceCumLenSolution.size()-1; i > 0; i=i-3) {
+            solutionRes.add(maxTargetSourceCumLenSolution.getInt(i-2));
+            solutionRes.add(maxTargetSourceCumLenSolution.getInt(i));
+            solutionRes.add(maxTargetSourceCumLenSolution.getInt(i-1));
         }
         return solutionRes;
     }
