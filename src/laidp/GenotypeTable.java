@@ -1000,6 +1000,18 @@ public class GenotypeTable {
         return localAncestry;
     }
 
+    /**
+     *
+     * @param windowSize The unit of window size is one variant, not base pairs (bp)
+     * @param stepSize The unit of step size is one variant, not base pairs (bp)
+     * @param taxaGroupFile taxaGroupFile
+     * @param ancestralAlleleBitSet dim1 is genotype(haploid), dim2 is missing.
+     * 1 in ancestralAlleleBitSet represent alternative allele is ancestral allele.
+     * @param conjunctionNum conjunctionNum
+     * @param switchCostScore switchCostScore
+     * @param threadsNum threadsNum
+     * @return BitSet[][] local ancestry, dim1 is admixed taxon index, dim2 is n_way admixture, index equal Source.index
+     */
     public BitSet[][] calculateLocalAncestry_loterLike(int windowSize, int stepSize, String taxaGroupFile,
                                                        BitSet[] ancestralAlleleBitSet, int conjunctionNum,
                                                        double switchCostScore, int maxSolutionCount, int threadsNum){
@@ -1083,6 +1095,18 @@ public class GenotypeTable {
         return localAncestry;
     }
 
+    /**
+     *
+     * @param windowSize The unit of window size is one variant, not base pairs (bp)
+     * @param stepSize The unit of step size is one variant, not base pairs (bp)
+     * @param taxaGroupFile taxaGroupFile
+     * @param ancestralAlleleBitSet dim1 is genotype(haploid), dim2 is missing.
+     * 1 in ancestralAlleleBitSet represent alternative allele is ancestral allele.
+     * @param conjunctionNum conjunctionNum
+     * @param switchCostScore switchCostScore
+     * @param threadsNum threadsNum
+     * @return BitSet[][] local ancestry, dim1 is admixed taxon index, dim2 is n_way admixture, index equal Source.index
+     */
     public BitSet[][] calculateLocalAncestry_singleThread(int windowSize, int stepSize, String taxaGroupFile,
                                                           BitSet[] ancestralAlleleBitSet, int conjunctionNum,
                                                           double switchCostScore, int maxSolutionCount, int threadsNum){
@@ -1165,6 +1189,90 @@ public class GenotypeTable {
             }
         }
         return localAncestry;
+    }
+
+    /**
+     *
+     * @param localAncestry local ancestry, dim1 is admixed taxon index, dim2 is n_way admixture, index equal Source.index
+     * @param taxaGroupFile taxaGroupFile
+     * @param outFile
+     * AdmixedIndividual	IntrogressedPopulation	Start	End
+     * tsk_0	INTROGRESSED_1	1490103	1518545
+     * tsk_0	INTROGRESSED_1	1531338	1569819
+     * tsk_0	INTROGRESSED_1	4703808	4725496
+     * tsk_0	INTROGRESSED_1	4753687	4795083
+     */
+    public void write_tract(BitSet[][] localAncestry, String taxaGroupFile, String outFile){
+        int admixedTaxaNum = localAncestry.length;
+        int sourceNum = localAncestry[0].length;
+        int variantNum = this.getSiteNumber();
+        int count;
+        List<int[]>[][] localTract = new List[admixedTaxaNum][];
+        for (int admixedTaxonIndex = 0; admixedTaxonIndex < admixedTaxaNum; admixedTaxonIndex++) {
+            localTract[admixedTaxonIndex] = new List[sourceNum];
+            for (int sourceIndex = 0; sourceIndex < sourceNum; sourceIndex++) {
+                localTract[admixedTaxonIndex][sourceIndex] = new ArrayList<>();
+            }
+        }
+        for (int admixedTaxonIndex = 0; admixedTaxonIndex < admixedTaxaNum; admixedTaxonIndex++) {
+            for (int sourceIndex = 0; sourceIndex < sourceNum; sourceIndex++) {
+                if (sourceIndex == 0) continue; // native source continue
+                count = 0;
+                int start = -1; // inclusive
+                int end; // exclusive
+                int[] startPos_endPos;
+                for (int variantIndex = 0; variantIndex < variantNum; variantIndex++) {
+                    if (localAncestry[admixedTaxonIndex][sourceIndex].get(variantIndex)){
+                        count++;
+                        if (start < 0){
+                            start = variantIndex;
+                        }
+                    }else {
+                        if (count > 1){
+                            end = start + count; // exclusive
+                            startPos_endPos = new int[2];
+                            startPos_endPos[0] = this.getPosition(start); // inclusive
+                            startPos_endPos[1] = this.getPosition(end -1); // inclusive
+                            localTract[admixedTaxonIndex][sourceIndex].add(startPos_endPos);
+                        }
+                        count = 0;
+                        start = -1;
+                    }
+                }
+                if (count > 1){
+                    end = start + count; // exclusive
+                    startPos_endPos = new int[2];
+                    startPos_endPos[0] = this.getPosition(start); // inclusive
+                    startPos_endPos[1] = this.getPosition(end -1); // inclusive
+                    localTract[admixedTaxonIndex][sourceIndex].add(startPos_endPos);
+                }
+            }
+        }
+
+        try (BufferedWriter bw = IOTool.getWriter(outFile)) {
+            bw.write("AdmixedIndividual\tIntrogressedPopulation\tStart\tEnd");
+            bw.newLine();
+            StringBuilder sb = new StringBuilder();
+            TaxaGroup taxaGroup = TaxaGroup.buildFrom(taxaGroupFile);
+            List<String> admixedTaxaList = taxaGroup.getTaxaOf(Source.ADMIXED);
+            for (int admixedTaxonIndex = 0; admixedTaxonIndex < admixedTaxaNum; admixedTaxonIndex++) {
+                for (int sourceIndex = 0; sourceIndex < sourceNum; sourceIndex++) {
+                    if (sourceIndex == 0) continue;
+                    int tractNum = localTract[admixedTaxonIndex][sourceIndex].size();
+                    for (int tractIndex = 0; tractIndex < tractNum; tractIndex++) {
+                        sb.append(admixedTaxaList.get(admixedTaxonIndex)).append("\t");
+                        sb.append(Source.getInstanceFromIndex(sourceIndex)).append("\t");
+                        sb.append(localTract[admixedTaxonIndex][sourceIndex].get(tractIndex)[0]).append("\t");
+                        sb.append(localTract[admixedTaxonIndex][sourceIndex].get(tractIndex)[1]);
+                        bw.write(sb.toString());
+                        bw.newLine();
+                    }
+                }
+            }
+            bw.flush();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
