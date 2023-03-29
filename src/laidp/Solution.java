@@ -208,13 +208,17 @@ public class Solution {
         int seqLen = forwardSolution.length;
         IntList[] reverseCandidateSolution;
         int[] reverseSolution;
-        if (forwardSolution[seqLen-1] != 1){
+        IntList singleSourceFeatureList = Source.getSingleSourceFeatureList();
+        singleSourceFeatureList.rem(1);
+        if (singleSourceFeatureList.contains(forwardSolution[seqLen-1])){
             reverseCandidateSolution = Solution.getCandidateSolution(Solution.reverseSrcGenotype(srcGenotype),
                     Solution.reverseGenotype(queryGenotype),switchCostScore, srcIndiList, taxaSourceMap);
             reverseSolution = Solution.coalescentReverse(reverseCandidateSolution);
             for (int i = seqLen - 1; i > -1; i--) {
                 if (reverseSolution[i]==1){
                     forwardSolution[i] = 1;
+                }else {
+                    break;
                 }
             }
         }
