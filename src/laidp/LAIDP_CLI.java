@@ -73,12 +73,11 @@ public class LAIDP_CLI {
     public void startRun(){
         GenotypeTable genotypeTable = new GenotypeTable(genotypeFile);
         BitSet[] ancestralAlleleBitSet = genotypeTable.getAncestralAlleleBitSet(ancestralAllele);
+        BitSet[][] localAnc = genotypeTable.calculateLocalAncestry(windowSize, stepSize, taxaGroupFile,
+                ancestralAlleleBitSet, conjunctionNum, switchCostScore, maxSolutionCount, threadsNum);
         if (ifTract){
-            genotypeTable.calculateLocalAncestry_singleThread_tract(windowSize, stepSize, taxaGroupFile,
-                    ancestralAlleleBitSet, conjunctionNum, switchCostScore, maxSolutionCount, threadsNum, localAnceOutFile);
+            genotypeTable.write_tract(localAnc, taxaGroupFile, localAnceOutFile);
         }else {
-            BitSet[][] localAnc = genotypeTable.calculateLocalAncestry(windowSize, stepSize, taxaGroupFile,
-                    ancestralAlleleBitSet, conjunctionNum, switchCostScore, maxSolutionCount, threadsNum);
             genotypeTable.write_localAncestry(localAnc, localAnceOutFile, taxaGroupFile);
         }
     }
@@ -155,15 +154,16 @@ public class LAIDP_CLI {
     }
 
     public static void main(String[] args) {
-//        String genotypeFile = "/Users/xudaxing/Desktop/LAIDP_development/twoWay_ancient_test_2/003_simulation/D011.vcf";
+//        String genotypeFile = "/Users/xudaxing/Desktop/LAIDP_development/two_way_ancient_test2/003_simulation/D009.vcf";
 //        int windowSize = 200;
 //        int stepSize = 100;
-//        String taxaGroupFile = "/Users/xudaxing/Desktop/LAIDP_development/twoWay_ancient_test_2/004_runner/c_0_s_1.5_m_128/D011.taxaGroup.txt";
+//        String taxaGroupFile = "/Users/xudaxing/Desktop/LAIDP_development/two_way_ancient_test2/004_runner/laidp/D009.taxaGroup.txt";
 //        String ancestryAllele = "simulation";
 //        int conjunctionNum = 0;
 //        double switchCostScore = 1.5;
 //        int maxSolutionCount = 128;
-//        String localAnceOutFile = "/Users/xudaxing/Desktop/LAIDP_development/twoWay_ancient_test_2/004_runner/c_0_s_1.5_m_128/D011.localAnc.txt";
+//        String localAnceOutFile = "/Users/xudaxing/Desktop/LAIDP_development/two_way_ancient_test2/004_runner/laidp" +
+//                "/D009.localAnc2.txt";
 //        int threadsNum = 2;
 ////
 //
@@ -177,6 +177,8 @@ public class LAIDP_CLI {
 //        int maxSolutionCount = Integer.parseInt(args[7]);
 //        String localAnceOutFile = args[8];
 //        int threadsNum = Integer.parseInt(args[9]);
+
+
 //////
 //        GenotypeTable.run_LAIDP(genotypeFile, windowSize, stepSize, taxaGroupFile, ancestryAllele, conjunctionNum,
 //                switchCostScore, maxSolutionCount, localAnceOutFile, threadsNum);
