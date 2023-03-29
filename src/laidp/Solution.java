@@ -218,6 +218,63 @@ public class Solution {
         return enumMap;
     }
 
+    public static int[] getBiDirectionCandidateSourceSolution_new(BitSet[] srcGenotypeFragment,
+                                                                                       BitSet queryGenotypeFragment,
+                                                                                      int fragmentLength,
+                                                                                      double switchCostScore,
+                                                                                      List<String> srcIndiList,
+                                                                                      Map<String, Source> taxaSourceMap,
+                                                                                      int maxSolutionCount){
+        int[][] srcGenotype = new int[srcGenotypeFragment.length][fragmentLength];
+        int[] queryGenotype = new int[fragmentLength];
+        for (int i = 0; i < srcGenotype.length; i++) {
+            for (int j = srcGenotypeFragment[i].nextSetBit(0); j >= 0; j=srcGenotypeFragment[i].nextSetBit(j+1)) {
+                srcGenotype[i][j] = 1;
+            }
+        }
+        for (int i = queryGenotypeFragment.nextSetBit(0); i >= 0; i = queryGenotypeFragment.nextSetBit(i+1)) {
+            queryGenotype[i] = 1;
+        }
+
+        IntList[] forwardCandidateSolutionCurrent = Solution.getCandidateSolution(srcGenotype,
+                queryGenotype, switchCostScore, srcIndiList, taxaSourceMap);
+        IntList[] forwardCandidateSolutionNext = Solution.getCandidateSolution(srcGenotype,
+                queryGenotype, switchCostScore+1, srcIndiList, taxaSourceMap);
+
+        int totalSolutionSizeCurrent = Solution.getMiniOptimalSolutionSize(forwardCandidateSolutionCurrent);
+        int totalSolutionSizeNext = Solution.getMiniOptimalSolutionSize(forwardCandidateSolutionNext);
+
+        //  totalSolutionSizeCurrent < 0 是因为 两个Int相乘的结果大于Int max
+        if ((totalSolutionSizeCurrent > maxSolutionCount && totalSolutionSizeNext <= totalSolutionSizeCurrent/2) || totalSolutionSizeCurrent <= 0){
+            return Solution.getBiDirectionCandidateSourceSolution_new(srcGenotypeFragment, queryGenotypeFragment,
+                    fragmentLength, switchCostScore+1, srcIndiList, taxaSourceMap, maxSolutionCount);
+        }
+
+//        if (totalSolutionSizeCurrent > maxSolutionCount){
+//            return Solution.getBiDirectionCandidateSourceSolution_new(srcGenotypeFragment, queryGenotypeFragment,
+//                    fragmentLength, switchCostScore+1, srcIndiList,
+//                    taxaSourceMap, maxSolutionCount);
+////            return new EnumMap<>(Solution.Direction.class);
+//        }
+
+        int[] forwardSolution = Solution.coalescentForward_new(forwardCandidateSolutionCurrent);
+        if (forwardSolution.length==0) return forwardSolution;
+        int seqLen = forwardSolution.length;
+        IntList[] reverseCandidateSolution;
+        int[] reverseSolution;
+        if (forwardSolution[seqLen-1] != 1){
+            reverseCandidateSolution = Solution.getCandidateSolution(Solution.reverseSrcGenotype(srcGenotype),
+                    Solution.reverseGenotype(queryGenotype),switchCostScore, srcIndiList, taxaSourceMap);
+            reverseSolution = Solution.coalescentReverse_new(reverseCandidateSolution);
+            for (int i = seqLen - 1; i > -1; i--) {
+                if (reverseSolution[i]==1){
+                    forwardSolution[i] = 1;
+                }
+            }
+        }
+        return forwardSolution;
+    }
+
     /**
      * loter-like or major vote
      */
@@ -258,6 +315,52 @@ public class Solution {
                 }
                 solutions.add(solution);
             }
+        }
+        int solutionCount = solutions.size();
+        int[] finalSolution = new int[fragmentLength];
+        Int2IntMap countMap;
+        for (int posIndex = 0; posIndex < fragmentLength; posIndex++) {
+            int maxCount = -1;
+            int mode = -1;
+            countMap = new Int2IntArrayMap();
+            for (int solutionIndex = 0; solutionIndex < solutionCount; solutionIndex++) {
+                sourceFeature = solutions.get(solutionIndex)[posIndex];
+                int feature;
+                for (int i = 1; i <= sourceFeature; i<<=1) {
+                    feature = sourceFeature & i;
+                    if (feature == 0) continue;
+                    int count = countMap.getOrDefault(feature, 0) + 1;
+                    countMap.put(feature, count);
+                    if (count > maxCount){
+                        mode = feature;
+                        maxCount = count;
+                    }
+                }
+            }
+            finalSolution[posIndex] = mode;
+        }
+
+        return finalSolution;
+    }
+
+    /**
+     * loter-like or major vote
+     */
+    public static int[] majorVote(List<IntList> candidateSolutions,
+                                         int fragmentLength){
+
+        int[] solution;
+        List<int[]> solutions = new ArrayList<>();
+        int sourceFeature, start, end;
+        for (int j = 0; j < candidateSolutions.size(); j++) {
+            solution = new int[fragmentLength];
+            for (int k = 0; k < candidateSolutions.get(j).size(); k=k+3) {
+                sourceFeature = candidateSolutions.get(j).get(k);
+                start = candidateSolutions.get(j).get(k+1); // inclusive
+                end = candidateSolutions.get(j).get(k+2); // inclusice
+                Arrays.fill(solution, start, end+1, sourceFeature);
+            }
+            solutions.add(solution);
         }
         int solutionCount = solutions.size();
         int[] finalSolution = new int[fragmentLength];
@@ -389,6 +492,61 @@ public class Solution {
         return solutionRes;
     }
 
+    public static int[] coalescentForward_new(IntList[] solutions){
+        int[] miniSolutionSizeArray = Solution.getOptimalSolutionsSize(solutions);
+        int miniSolutionSize = Solution.getMiniOptimalSolutionSize(solutions);
+        int miniSolutionEleCount = Solution.getMiniSolutionEleCount(solutions);
+        int solutionEleCount;
+        Set<IntList> solutionSet = new HashSet<>();
+        for (int i = 0; i < solutions.length; i++) {
+            if (miniSolutionSizeArray[i]!=miniSolutionSize) continue;
+            if (solutions[i].size()!=miniSolutionEleCount) continue;
+            solutionEleCount =  solutions[i].size();
+            // filter Source is NATIVE
+            if (solutionEleCount==3 && (solutions[i].getInt(0)==Source.NATIVE.getFeature())) continue;
+            solutionSet.add(solutions[i]);
+        }
+        List<IntList> solutionList = new ArrayList<>(solutionSet);
+        if (solutionList.size()==0) return new int[0];
+        int[] targetSourceCumLen = Solution.getTargetSourceCumLen(solutionList);
+        int maxTargetSourceCumLen = Integer.MIN_VALUE;
+        for (int j : targetSourceCumLen) {
+            maxTargetSourceCumLen = Math.max(j, maxTargetSourceCumLen);
+        }
+        List<IntList> solutionList2 = new ArrayList<>();
+        for (int i = 0; i < targetSourceCumLen.length; i++) {
+            if (targetSourceCumLen[i] == maxTargetSourceCumLen){
+                solutionList2.add(solutionList.get(i));
+            }
+        }
+
+        int solutionCount = solutionList2.size();
+        List<IntList> forwardSolutions = new ArrayList<>();
+        IntList maxTargetSourceCumLenSolution, solutionRes;
+        int fragmentLen = solutionList2.get(0).getInt(1)+1;
+        IntList introgressedFeatureList = Source.getSingleSourceFeatureList();
+        introgressedFeatureList.rem(1);
+        for (int solutionIndex = 0; solutionIndex < solutionCount; solutionIndex++) {
+            maxTargetSourceCumLenSolution = solutionList2.get(solutionIndex);
+            solutionRes = new IntArrayList();
+            int sourceFeature, start, end;
+            for (int i = maxTargetSourceCumLenSolution.size()-1; i > 0; i=i-3) {
+                sourceFeature = maxTargetSourceCumLenSolution.getInt(i-2);
+                start = maxTargetSourceCumLenSolution.getInt(i);
+                end = maxTargetSourceCumLenSolution.getInt(i-1);
+//                if (introgressedFeatureList.contains(sourceFeature) && (end-start+1) < fragmentLen/20){
+//                    sourceFeature = 1; // 片段过短, 可能是ILS, 因此设为native ancestry
+//                }
+                solutionRes.add(sourceFeature);
+                solutionRes.add(start);
+                solutionRes.add(end);
+            }
+            forwardSolutions.add(solutionRes);
+        }
+
+        return majorVote(forwardSolutions, fragmentLen);
+    }
+
     public static IntList coalescentReverse(IntList[] solutions){
         int[] miniSolutionSizeArray = Solution.getOptimalSolutionsSize(solutions);
         int miniSolutionSize = Solution.getMiniOptimalSolutionSize(solutions);
@@ -425,6 +583,62 @@ public class Solution {
             solutionRes.add(seqLen-maxTargetSourceCumLenSolution.getInt(i+2));
         }
         return solutionRes;
+    }
+
+    public static int[] coalescentReverse_new(IntList[] solutions){
+        int[] miniSolutionSizeArray = Solution.getOptimalSolutionsSize(solutions);
+        int miniSolutionSize = Solution.getMiniOptimalSolutionSize(solutions);
+        int miniSolutionEleCount = Solution.getMiniSolutionEleCount(solutions);
+        int solutionEleCount;
+        Set<IntList> solutionSet = new HashSet<>();
+        for (int i = 0; i < solutions.length; i++) {
+            if (miniSolutionSizeArray[i]!=miniSolutionSize) continue;
+            if (solutions[i].size()!=miniSolutionEleCount) continue;
+            solutionEleCount =  solutions[i].size();
+            // filter Source is NATIVE
+            if (solutionEleCount==3 && (solutions[i].getInt(0)==Source.NATIVE.getFeature())) continue;
+            solutionSet.add(solutions[i]);
+        }
+        List<IntList> solutionList = new ArrayList<>(solutionSet);
+        if (solutionList.size()==0) return new int[0];
+        int[] targetSourceCumLen = Solution.getTargetSourceCumLen(solutionList);
+        int maxTargetSourceCumLen = Integer.MIN_VALUE;
+        for (int j : targetSourceCumLen) {
+            maxTargetSourceCumLen = Math.max(j, maxTargetSourceCumLen);
+        }
+
+        List<IntList> solutionList2 = new ArrayList<>();
+        for (int i = 0; i < targetSourceCumLen.length; i++) {
+            if (targetSourceCumLen[i] == maxTargetSourceCumLen){
+                solutionList2.add(solutionList.get(i));
+            }
+        }
+        int solutionCount = solutionList2.size();
+        List<IntList> reverseSolutions = new ArrayList<>();
+        IntList solutionRes;
+        IntList maxTargetSourceCumLenSolution;
+        int seqLen = solutionList2.get(0).getInt(1) + 1;
+        IntList introgressedFeatureList = Source.getSingleSourceFeatureList();
+        introgressedFeatureList.rem(1);
+        for (int solutionIndex = 0; solutionIndex < solutionCount; solutionIndex++) {
+            solutionRes = new IntArrayList();
+            maxTargetSourceCumLenSolution = solutionList2.get(solutionIndex);
+            int sourceFeature, start, end;
+            for (int i = 0; i < maxTargetSourceCumLenSolution.size(); i=i+3) {
+                sourceFeature = maxTargetSourceCumLenSolution.getInt(i);
+                start = seqLen-1-maxTargetSourceCumLenSolution.getInt(i+1);
+                end = seqLen-1-maxTargetSourceCumLenSolution.getInt(i+2);
+//                if (introgressedFeatureList.contains(sourceFeature) && (end-start+1) < seqLen/20){
+//                    sourceFeature = 1; // 片段过短, 可能是ILS, 因此设为native ancestry
+//                }
+                solutionRes.add(sourceFeature);
+                solutionRes.add(start);
+                solutionRes.add(end);
+            }
+            reverseSolutions.add(solutionRes);
+        }
+
+        return majorVote(reverseSolutions, seqLen);
     }
 
     /**
