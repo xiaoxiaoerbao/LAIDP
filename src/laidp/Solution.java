@@ -171,12 +171,13 @@ public class Solution {
         return Source.getSourceFeature(sourceEnumSet);
     }
 
-    public static EnumMap<Direction, IntList[]> getBiDirectionCandidateSourceSolution(BitSet[] srcGenotypeFragment, BitSet queryGenotypeFragment,
-                                                                                      int fragmentLength,
-                                                                                      double switchCostScore,
-                                                                                      List<String> srcIndiList,
-                                                                                      Map<String, Source> taxaSourceMap,
-                                                                                      int maxSolutionCount){
+    public static int[] getSolution(BitSet[] srcGenotypeFragment,
+                                    BitSet queryGenotypeFragment,
+                                    int fragmentLength,
+                                    double switchCostScore,
+                                    List<String> srcIndiList,
+                                    Map<String, Source> taxaSourceMap,
+                                    int maxSolutionCount){
         int[][] srcGenotype = new int[srcGenotypeFragment.length][fragmentLength];
         int[] queryGenotype = new int[fragmentLength];
         for (int i = 0; i < srcGenotype.length; i++) {
@@ -198,66 +199,11 @@ public class Solution {
 
         //  totalSolutionSizeCurrent < 0 是因为 两个Int相乘的结果大于Int max
         if ((totalSolutionSizeCurrent > maxSolutionCount && totalSolutionSizeNext <= totalSolutionSizeCurrent/2) || totalSolutionSizeCurrent <= 0){
-            return Solution.getBiDirectionCandidateSourceSolution(srcGenotypeFragment, queryGenotypeFragment,
+            return Solution.getSolution(srcGenotypeFragment, queryGenotypeFragment,
                     fragmentLength, switchCostScore+1, srcIndiList, taxaSourceMap, maxSolutionCount);
         }
 
-        if (totalSolutionSizeCurrent > maxSolutionCount){
-            return Solution.getBiDirectionCandidateSourceSolution(srcGenotypeFragment, queryGenotypeFragment,
-                    fragmentLength, switchCostScore+1, srcIndiList,
-                    taxaSourceMap, maxSolutionCount);
-//            return new EnumMap<>(Solution.Direction.class);
-        }
-
-        IntList[] reverseCandidateSolution =
-                Solution.getCandidateSolution(Solution.reverseSrcGenotype(srcGenotype),
-                        Solution.reverseGenotype(queryGenotype),switchCostScore, srcIndiList, taxaSourceMap);
-        EnumMap<Direction, IntList[]> enumMap = new EnumMap<>(Direction.class);
-        enumMap.put(Direction.F, forwardCandidateSolutionCurrent);
-        enumMap.put(Direction.R, reverseCandidateSolution);
-        return enumMap;
-    }
-
-    public static int[] getBiDirectionCandidateSourceSolution_new(BitSet[] srcGenotypeFragment,
-                                                                                       BitSet queryGenotypeFragment,
-                                                                                      int fragmentLength,
-                                                                                      double switchCostScore,
-                                                                                      List<String> srcIndiList,
-                                                                                      Map<String, Source> taxaSourceMap,
-                                                                                      int maxSolutionCount){
-        int[][] srcGenotype = new int[srcGenotypeFragment.length][fragmentLength];
-        int[] queryGenotype = new int[fragmentLength];
-        for (int i = 0; i < srcGenotype.length; i++) {
-            for (int j = srcGenotypeFragment[i].nextSetBit(0); j >= 0; j=srcGenotypeFragment[i].nextSetBit(j+1)) {
-                srcGenotype[i][j] = 1;
-            }
-        }
-        for (int i = queryGenotypeFragment.nextSetBit(0); i >= 0; i = queryGenotypeFragment.nextSetBit(i+1)) {
-            queryGenotype[i] = 1;
-        }
-
-        IntList[] forwardCandidateSolutionCurrent = Solution.getCandidateSolution(srcGenotype,
-                queryGenotype, switchCostScore, srcIndiList, taxaSourceMap);
-        IntList[] forwardCandidateSolutionNext = Solution.getCandidateSolution(srcGenotype,
-                queryGenotype, switchCostScore+1, srcIndiList, taxaSourceMap);
-
-        int totalSolutionSizeCurrent = Solution.getMiniOptimalSolutionSize(forwardCandidateSolutionCurrent);
-        int totalSolutionSizeNext = Solution.getMiniOptimalSolutionSize(forwardCandidateSolutionNext);
-
-        //  totalSolutionSizeCurrent < 0 是因为 两个Int相乘的结果大于Int max
-        if ((totalSolutionSizeCurrent > maxSolutionCount && totalSolutionSizeNext <= totalSolutionSizeCurrent/2) || totalSolutionSizeCurrent <= 0){
-            return Solution.getBiDirectionCandidateSourceSolution_new(srcGenotypeFragment, queryGenotypeFragment,
-                    fragmentLength, switchCostScore+1, srcIndiList, taxaSourceMap, maxSolutionCount);
-        }
-
-//        if (totalSolutionSizeCurrent > maxSolutionCount){
-//            return Solution.getBiDirectionCandidateSourceSolution_new(srcGenotypeFragment, queryGenotypeFragment,
-//                    fragmentLength, switchCostScore+1, srcIndiList,
-//                    taxaSourceMap, maxSolutionCount);
-////            return new EnumMap<>(Solution.Direction.class);
-//        }
-
-        int[] forwardSolution = Solution.coalescentForward_new(forwardCandidateSolutionCurrent);
+        int[] forwardSolution = Solution.coalescentForward(forwardCandidateSolutionCurrent);
         if (forwardSolution.length==0) return forwardSolution;
         int seqLen = forwardSolution.length;
         IntList[] reverseCandidateSolution;
@@ -265,7 +211,7 @@ public class Solution {
         if (forwardSolution[seqLen-1] != 1){
             reverseCandidateSolution = Solution.getCandidateSolution(Solution.reverseSrcGenotype(srcGenotype),
                     Solution.reverseGenotype(queryGenotype),switchCostScore, srcIndiList, taxaSourceMap);
-            reverseSolution = Solution.coalescentReverse_new(reverseCandidateSolution);
+            reverseSolution = Solution.coalescentReverse(reverseCandidateSolution);
             for (int i = seqLen - 1; i > -1; i--) {
                 if (reverseSolution[i]==1){
                     forwardSolution[i] = 1;
@@ -453,46 +399,7 @@ public class Solution {
         return miniSolutionEleCount;
     }
 
-
-    public static IntList coalescentForward(IntList[] solutions){
-        int[] miniSolutionSizeArray = Solution.getOptimalSolutionsSize(solutions);
-        int miniSolutionSize = Solution.getMiniOptimalSolutionSize(solutions);
-        int miniSolutionEleCount = Solution.getMiniSolutionEleCount(solutions);
-        int solutionEleCount;
-        Set<IntList> solutionSet = new HashSet<>();
-        for (int i = 0; i < solutions.length; i++) {
-            if (miniSolutionSizeArray[i]!=miniSolutionSize) continue;
-            if (solutions[i].size()!=miniSolutionEleCount) continue;
-            solutionEleCount =  solutions[i].size();
-            // filter Source is NATIVE
-            if (solutionEleCount==3 && (solutions[i].getInt(0)==Source.NATIVE.getFeature())) continue;
-            solutionSet.add(solutions[i]);
-        }
-        List<IntList> solutionList = new ArrayList<>(solutionSet);
-        if (solutionList.size()==0) return new IntArrayList();
-        int[] targetSourceCumLen = Solution.getTargetSourceCumLen(solutionList);
-        int maxTargetSourceCumLen = Integer.MIN_VALUE;
-        for (int j : targetSourceCumLen) {
-            maxTargetSourceCumLen = Math.max(j, maxTargetSourceCumLen);
-        }
-        IntList maxTargetSourceCumLenSolution=null;
-        for (int i = 0; i < targetSourceCumLen.length; i++) {
-            if (targetSourceCumLen[i] == maxTargetSourceCumLen){
-                maxTargetSourceCumLenSolution = solutionList.get(i);
-                break;
-            }
-        }
-
-        IntList solutionRes = new IntArrayList();
-        for (int i = maxTargetSourceCumLenSolution.size()-1; i > 0; i=i-3) {
-            solutionRes.add(maxTargetSourceCumLenSolution.getInt(i-2));
-            solutionRes.add(maxTargetSourceCumLenSolution.getInt(i));
-            solutionRes.add(maxTargetSourceCumLenSolution.getInt(i-1));
-        }
-        return solutionRes;
-    }
-
-    public static int[] coalescentForward_new(IntList[] solutions){
+    public static int[] coalescentForward(IntList[] solutions){
         int[] miniSolutionSizeArray = Solution.getOptimalSolutionsSize(solutions);
         int miniSolutionSize = Solution.getMiniOptimalSolutionSize(solutions);
         int miniSolutionEleCount = Solution.getMiniSolutionEleCount(solutions);
@@ -547,45 +454,7 @@ public class Solution {
         return majorVote(forwardSolutions, fragmentLen);
     }
 
-    public static IntList coalescentReverse(IntList[] solutions){
-        int[] miniSolutionSizeArray = Solution.getOptimalSolutionsSize(solutions);
-        int miniSolutionSize = Solution.getMiniOptimalSolutionSize(solutions);
-        int miniSolutionEleCount = Solution.getMiniSolutionEleCount(solutions);
-        int solutionEleCount;
-        Set<IntList> solutionSet = new HashSet<>();
-        for (int i = 0; i < solutions.length; i++) {
-            if (miniSolutionSizeArray[i]!=miniSolutionSize) continue;
-            if (solutions[i].size()!=miniSolutionEleCount) continue;
-            solutionEleCount =  solutions[i].size();
-            // filter Source is NATIVE
-            if (solutionEleCount==3 && (solutions[i].getInt(0)==Source.NATIVE.getFeature())) continue;
-            solutionSet.add(solutions[i]);
-        }
-        List<IntList> solutionList = new ArrayList<>(solutionSet);
-        if (solutionList.size()==0) return new IntArrayList();
-        int[] targetSourceCumLen = Solution.getTargetSourceCumLen(solutionList);
-        int maxTargetSourceCumLen = Integer.MIN_VALUE;
-        for (int j : targetSourceCumLen) {
-            maxTargetSourceCumLen = Math.max(j, maxTargetSourceCumLen);
-        }
-        IntList maxTargetSourceCumLenSolution=null;
-        for (int i = 0; i < targetSourceCumLen.length; i++) {
-            if (targetSourceCumLen[i] == maxTargetSourceCumLen){
-                maxTargetSourceCumLenSolution = solutionList.get(i);
-                break;
-            }
-        }
-        IntList solutionRes = new IntArrayList();
-        int seqLen = solutionList.get(0).getInt(1);
-        for (int i = 0; i < maxTargetSourceCumLenSolution.size(); i=i+3) {
-            solutionRes.add(maxTargetSourceCumLenSolution.getInt(i));
-            solutionRes.add(seqLen-maxTargetSourceCumLenSolution.getInt(i+1));
-            solutionRes.add(seqLen-maxTargetSourceCumLenSolution.getInt(i+2));
-        }
-        return solutionRes;
-    }
-
-    public static int[] coalescentReverse_new(IntList[] solutions){
+    public static int[] coalescentReverse(IntList[] solutions){
         int[] miniSolutionSizeArray = Solution.getOptimalSolutionsSize(solutions);
         int miniSolutionSize = Solution.getMiniOptimalSolutionSize(solutions);
         int miniSolutionEleCount = Solution.getMiniSolutionEleCount(solutions);
@@ -639,48 +508,6 @@ public class Solution {
         }
 
         return majorVote(reverseSolutions, seqLen);
-    }
-
-    /**
-     *
-     * @param candidateSolutions candidateSolutions
-     * @return final solution, every three numbers as a group, representing a tract
-     * the first number is source population index, equal WindowSource.Source.index()
-     * the second and third number is start(inclusive) position and end(inclusive) position
-     */
-    public static IntList calculateBreakPoint(EnumMap<Direction, IntList[]> candidateSolutions){
-        if (candidateSolutions.size()==0) return new IntArrayList();
-        IntList forwardSolution = Solution.coalescentForward(candidateSolutions.get(Direction.F));
-        if (forwardSolution.size()==0) return new IntArrayList();
-        IntList singleSourceFeatureList = Source.getSingleSourceFeatureList();
-        int forwardCount, reverseCount;
-        forwardCount = forwardSolution.size()/3;
-        int forwardLastSourceFeature = forwardSolution.getInt(forwardSolution.size()-3);
-        IntList reverseSolution;
-        if (singleSourceFeatureList.contains(forwardLastSourceFeature)){
-            reverseSolution = Solution.coalescentReverse(candidateSolutions.get(Direction.R));
-            if (reverseSolution.size()==0) return forwardSolution;
-            reverseCount = reverseSolution.size()/3;
-            if (forwardCount==1 || reverseCount==1) return forwardSolution;
-
-            // 双向动态规划的末端调整需要满足reverseCount > forwardCount的条件
-            if (reverseCount < forwardCount) return reverseSolution;
-            if (reverseSolution.getInt(reverseSolution.size()-6)==(forwardLastSourceFeature)){
-                if((reverseSolution.getInt(reverseSolution.size()-6)!=(reverseSolution.getInt(reverseSolution.size()-3)))){
-
-                    // make sure final range is right
-                    if (reverseSolution.getInt(reverseSolution.size()-4) > forwardSolution.getInt(forwardSolution.size()-2)){
-                        forwardSolution.set((forwardCount-1)*3+2, reverseSolution.getInt((reverseCount-2)*3+2));
-                        forwardSolution.add(reverseSolution.getInt((reverseCount - 1) * 3));
-                        forwardSolution.add(reverseSolution.getInt((reverseCount-1)*3+1));
-                        forwardSolution.add(reverseSolution.getInt((reverseCount-1)*3+2));
-                        return forwardSolution;
-                    }
-
-                }
-            }
-        }
-        return forwardSolution;
     }
 
     public static int[] getTargetSourceCumLen(List<IntList> solutions){
