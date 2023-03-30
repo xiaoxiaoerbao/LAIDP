@@ -88,7 +88,7 @@ public class Solution {
      * @return candidate solution, it consists of multiple solutions with the same mini cost score
      * dim1 is mini cost score index, dim2 is solution
      * Solution consists of multiple groups, every three numbers as a group, representing a tract
-     * the first number is source population index, equal WindowSource.Source.index()
+     * the first number is source feature, it may contains multiple sources
      * the second and third number is start(inclusive) position and end(inclusive) position
      */
     public static IntList[] getCandidateSolution(BitSet[] srcGenotype, BitSet queryGenotype, double switchCostScore,
@@ -173,6 +173,17 @@ public class Solution {
         return Source.getSourceFeature(sourceEnumSet);
     }
 
+    /**
+     *
+     * @param srcGenotypeFragment  the first dim is haplotype, the second dim is SNP position
+     * @param queryGenotypeFragment queryGenotype, 0 means reference allele, 1 means alternative allele
+     * @param fragmentLength fragmentLength
+     * @param switchCostScore switchCostScore
+     * @param srcIndiList srcIndiList, order must same as srcGenotype
+     * @param taxaSourceMap taxaSourceMap
+     * @param maxSolutionCount maxSolutionCount
+     * @return solution, each element is a source feature (only contain one source), e.g., 1 or 2 or 4 or 8 or 16
+     */
     public static int[] getSolution(BitSet[] srcGenotypeFragment,
                                     BitSet queryGenotypeFragment,
                                     int fragmentLength,
@@ -272,7 +283,11 @@ public class Solution {
     }
 
     /**
-     * loter-like or major vote
+     *
+     * @param candidateSolutions candidate solutions, note these candidate solutions each source feature only
+     *                           contains one source
+     * @param fragmentLength fragment length
+     * @return solution, each element is a source feature (only contain one source), e.g., 1 or 2 or 4 or 8 or 16
      */
     public static int[] majorVote(List<IntList> candidateSolutions,
                                          int fragmentLength){
@@ -378,19 +393,29 @@ public class Solution {
         return miniSolutionEleCount;
     }
 
-    public static int[] coalescentForward(IntList[] solutions){
-        int[] miniSolutionSizeArray = Solution.getOptimalSolutionsSize(solutions);
-        int miniSolutionSize = Solution.getMiniOptimalSolutionSize(solutions);
-        int miniSolutionEleCount = Solution.getMiniSolutionEleCount(solutions);
+    /**
+     *
+     * @param forwardCandidateSolutions forward candidate solutions, it consists of multiple solutions with the same
+     *                                  mini cost score
+     * dim1 is mini cost score index, dim2 is solution
+     * Solution consists of multiple groups, every three numbers as a group, representing a tract
+     * the first number is source population index, equal WindowSource.Source.index()
+     * the second and third number is start(inclusive) position and end(inclusive) position
+     * @return solution, each element is a source feature (only contain one source), e.g., 1 or 2 or 4 or 8 or 16
+     */
+    public static int[] coalescentForward(IntList[] forwardCandidateSolutions){
+        int[] miniSolutionSizeArray = Solution.getOptimalSolutionsSize(forwardCandidateSolutions);
+        int miniSolutionSize = Solution.getMiniOptimalSolutionSize(forwardCandidateSolutions);
+        int miniSolutionEleCount = Solution.getMiniSolutionEleCount(forwardCandidateSolutions);
         int solutionEleCount;
         Set<IntList> solutionSet = new HashSet<>();
-        for (int i = 0; i < solutions.length; i++) {
+        for (int i = 0; i < forwardCandidateSolutions.length; i++) {
             if (miniSolutionSizeArray[i]!=miniSolutionSize) continue;
-            if (solutions[i].size()!=miniSolutionEleCount) continue;
-            solutionEleCount =  solutions[i].size();
+            if (forwardCandidateSolutions[i].size()!=miniSolutionEleCount) continue;
+            solutionEleCount =  forwardCandidateSolutions[i].size();
             // filter Source is NATIVE
-            if (solutionEleCount==3 && (solutions[i].getInt(0)==Source.NATIVE.getFeature())) continue;
-            solutionSet.add(solutions[i]);
+            if (solutionEleCount==3 && (forwardCandidateSolutions[i].getInt(0)==Source.NATIVE.getFeature())) continue;
+            solutionSet.add(forwardCandidateSolutions[i]);
         }
         List<IntList> solutionList = new ArrayList<>(solutionSet);
         if (solutionList.size()==0) return new int[0];
@@ -432,19 +457,29 @@ public class Solution {
         return majorVote(forwardSolutions, fragmentLen);
     }
 
-    public static int[] coalescentReverse(IntList[] solutions){
-        int[] miniSolutionSizeArray = Solution.getOptimalSolutionsSize(solutions);
-        int miniSolutionSize = Solution.getMiniOptimalSolutionSize(solutions);
-        int miniSolutionEleCount = Solution.getMiniSolutionEleCount(solutions);
+    /**
+     *
+     * @param reversedCandidateSolutions forward candidate solutions, it consists of multiple solutions with the same
+     *                                   mini cost score
+     * dim1 is mini cost score index, dim2 is solution
+     * Solution consists of multiple groups, every three numbers as a group, representing a tract
+     * the first number is source population index, equal WindowSource.Source.index()
+     * the second and third number is start(inclusive) position and end(inclusive) position
+     * @return solution, each element is a source feature (only contain one source), e.g., 1 or 2 or 4 or 8 or 16
+     */
+    public static int[] coalescentReverse(IntList[] reversedCandidateSolutions){
+        int[] miniSolutionSizeArray = Solution.getOptimalSolutionsSize(reversedCandidateSolutions);
+        int miniSolutionSize = Solution.getMiniOptimalSolutionSize(reversedCandidateSolutions);
+        int miniSolutionEleCount = Solution.getMiniSolutionEleCount(reversedCandidateSolutions);
         int solutionEleCount;
         Set<IntList> solutionSet = new HashSet<>();
-        for (int i = 0; i < solutions.length; i++) {
+        for (int i = 0; i < reversedCandidateSolutions.length; i++) {
             if (miniSolutionSizeArray[i]!=miniSolutionSize) continue;
-            if (solutions[i].size()!=miniSolutionEleCount) continue;
-            solutionEleCount =  solutions[i].size();
+            if (reversedCandidateSolutions[i].size()!=miniSolutionEleCount) continue;
+            solutionEleCount =  reversedCandidateSolutions[i].size();
             // filter Source is NATIVE
-            if (solutionEleCount==3 && (solutions[i].getInt(0)==Source.NATIVE.getFeature())) continue;
-            solutionSet.add(solutions[i]);
+            if (solutionEleCount==3 && (reversedCandidateSolutions[i].getInt(0)==Source.NATIVE.getFeature())) continue;
+            solutionSet.add(reversedCandidateSolutions[i]);
         }
         List<IntList> solutionList = new ArrayList<>(solutionSet);
         if (solutionList.size()==0) return new int[0];
