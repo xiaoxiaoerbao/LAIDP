@@ -12,8 +12,8 @@ public class Solution {
      * @param switchCostScore switchCostScore
      * @return mini cost score matrix, the first dim is haplotype, the second dim is SNP position
      */
-    public static double[][] getMiniCostScore(int[][] srcGenotype, int[] queryGenotype,
-                                              double switchCostScore){
+    public static double[][] getMiniCostScore(BitSet[] srcGenotype, BitSet queryGenotype,
+                                              double switchCostScore, int seqLen){
         //        double switchCostScore= 1.5;
 //        int[][] srcGenotype = {{0,1,0,1,0,1,0,0,0,0,1,1},
 //                            {0,0,0,1,0,1,1,0,0,0,1,1},
@@ -25,18 +25,20 @@ public class Solution {
 
 //        long start = System.nanoTime();
         int rowNum = srcGenotype.length;
-        int colNum = srcGenotype[0].length;
 
         // distance
-        double[][] distance = new double[rowNum][colNum];
+        double[][] distance = new double[rowNum][seqLen];
+        int source, query;
         for (int i = 0; i < rowNum; i++) {
-            for (int j = 0; j < colNum; j++) {
-                distance[i][j]=Math.abs(srcGenotype[i][j]- queryGenotype[j]);
+            for (int j = 0; j < seqLen; j++) {
+                source = srcGenotype[i].get(j) ? 1 : 0;
+                query = queryGenotype.get(j) ? 1 : 0;
+                distance[i][j] = Math.abs(source-query);
             }
         }
 
         // initialize mini cost score
-        double[][] miniCost = new double[rowNum][colNum];
+        double[][] miniCost = new double[rowNum][seqLen];
         for (int i = 0; i < miniCost.length; i++) {
             miniCost[i][0] = distance[i][0];
         }
@@ -45,7 +47,7 @@ public class Solution {
         // i is SNP position
         // j is haplotype index of source population
         // miniCost
-        for (int i = 1; i < colNum; i++) {
+        for (int i = 1; i < seqLen; i++) {
 
             // j-1 SNP位置，单倍型路径发生switch对应的最小Cost
             double miniCostSwitch=Double.MAX_VALUE;
@@ -89,10 +91,10 @@ public class Solution {
      * the first number is source population index, equal WindowSource.Source.index()
      * the second and third number is start(inclusive) position and end(inclusive) position
      */
-    public static IntList[] getCandidateSolution(int[][] srcGenotype, int[] queryGenotype, double switchCostScore,
-                                                 List<String> srcIndiList, Map<String, Source> taxaSourceMap) {
+    public static IntList[] getCandidateSolution(BitSet[] srcGenotype, BitSet queryGenotype, double switchCostScore,
+                                                 int seqLen, List<String> srcIndiList, Map<String, Source> taxaSourceMap) {
 
-        double[][] miniCost = Solution.getMiniCostScore(srcGenotype, queryGenotype, switchCostScore);
+        double[][] miniCost = Solution.getMiniCostScore(srcGenotype, queryGenotype, switchCostScore, seqLen);
         int haplotypeLen = miniCost[0].length;
 
         // Find the index of the minimum cost score
@@ -178,21 +180,10 @@ public class Solution {
                                     List<String> srcIndiList,
                                     Map<String, Source> taxaSourceMap,
                                     int maxSolutionCount){
-        int[][] srcGenotype = new int[srcGenotypeFragment.length][fragmentLength];
-        int[] queryGenotype = new int[fragmentLength];
-        for (int i = 0; i < srcGenotype.length; i++) {
-            for (int j = srcGenotypeFragment[i].nextSetBit(0); j >= 0; j=srcGenotypeFragment[i].nextSetBit(j+1)) {
-                srcGenotype[i][j] = 1;
-            }
-        }
-        for (int i = queryGenotypeFragment.nextSetBit(0); i >= 0; i = queryGenotypeFragment.nextSetBit(i+1)) {
-            queryGenotype[i] = 1;
-        }
-
-        IntList[] forwardCandidateSolutionCurrent = Solution.getCandidateSolution(srcGenotype,
-                queryGenotype, switchCostScore, srcIndiList, taxaSourceMap);
-        IntList[] forwardCandidateSolutionNext = Solution.getCandidateSolution(srcGenotype,
-                queryGenotype, switchCostScore+1, srcIndiList, taxaSourceMap);
+        IntList[] forwardCandidateSolutionCurrent = Solution.getCandidateSolution(srcGenotypeFragment,
+                queryGenotypeFragment, switchCostScore, fragmentLength, srcIndiList, taxaSourceMap);
+        IntList[] forwardCandidateSolutionNext = Solution.getCandidateSolution(srcGenotypeFragment,
+                queryGenotypeFragment, switchCostScore+1, fragmentLength, srcIndiList, taxaSourceMap);
 
         int totalSolutionSizeCurrent = Solution.getMiniOptimalSolutionSize(forwardCandidateSolutionCurrent);
         int totalSolutionSizeNext = Solution.getMiniOptimalSolutionSize(forwardCandidateSolutionNext);
@@ -211,8 +202,10 @@ public class Solution {
         IntList singleSourceFeatureList = Source.getSingleSourceFeatureList();
         singleSourceFeatureList.rem(1);
         if (singleSourceFeatureList.contains(forwardSolution[seqLen-1])){
-            reverseCandidateSolution = Solution.getCandidateSolution(Solution.reverseSrcGenotype(srcGenotype),
-                    Solution.reverseGenotype(queryGenotype),switchCostScore, srcIndiList, taxaSourceMap);
+            reverseCandidateSolution =
+                    Solution.getCandidateSolution(Solution.reverseSrcGenotype(srcGenotypeFragment, fragmentLength),
+                    Solution.reverseGenotype(queryGenotypeFragment,fragmentLength),switchCostScore, fragmentLength, srcIndiList,
+                            taxaSourceMap);
             reverseSolution = Solution.coalescentReverse(reverseCandidateSolution);
             for (int i = seqLen - 1; i > -1; i--) {
                 if (reverseSolution[i]==1){
@@ -231,57 +224,42 @@ public class Solution {
     public static int[] getLoterSolution(BitSet[] srcGenotypeFragment,
                                          BitSet queryGenotypeFragment,
                                          int fragmentLength,
-                                         double switchCostScore,
                                          List<String> srcIndiList,
-                                         Map<String, Source> taxaSourceMap,
-                                         int maxSolutionCount){
-        int[][] srcGenotype = new int[srcGenotypeFragment.length][fragmentLength];
-        int[] queryGenotype = new int[fragmentLength];
-        for (int i = 0; i < srcGenotype.length; i++) {
-            for (int j = srcGenotypeFragment[i].nextSetBit(0); j >= 0; j=srcGenotypeFragment[i].nextSetBit(j+1)) {
-                srcGenotype[i][j] = 1;
-            }
-        }
-        for (int i = queryGenotypeFragment.nextSetBit(0); i >= 0; i = queryGenotypeFragment.nextSetBit(i+1)) {
-            queryGenotype[i] = 1;
-        }
-
-
+                                         Map<String, Source> taxaSourceMap){
         double[] switchCostScores = {1.5};
         IntList[] candidateSolutions;
         int[] solution;
         List<int[]> solutions = new ArrayList<>();
         int sourceFeature, start, end;
-        for (int i = 0; i < switchCostScores.length; i++) {
-            candidateSolutions = Solution.getCandidateSolution(srcGenotype, queryGenotype,
-                    switchCostScores[i], srcIndiList, taxaSourceMap);
-            for (int j = 0; j < candidateSolutions.length; j++) {
+        for (double switchCostScore : switchCostScores) {
+            candidateSolutions = Solution.getCandidateSolution(srcGenotypeFragment, queryGenotypeFragment,
+                    switchCostScore, fragmentLength, srcIndiList, taxaSourceMap);
+            for (IntList candidateSolution : candidateSolutions) {
                 solution = new int[fragmentLength];
-                for (int k = 0; k < candidateSolutions[j].size(); k=k+3) {
-                    sourceFeature = candidateSolutions[j].get(k);
-                    start = candidateSolutions[j].get(k+2); // inclusive
-                    end = candidateSolutions[j].get(k+1); // inclusice
-                    Arrays.fill(solution, start, end+1, sourceFeature);
+                for (int k = 0; k < candidateSolution.size(); k = k + 3) {
+                    sourceFeature = candidateSolution.getInt(k);
+                    start = candidateSolution.getInt(k + 2); // inclusive
+                    end = candidateSolution.getInt(k + 1); // inclusice
+                    Arrays.fill(solution, start, end + 1, sourceFeature);
                 }
                 solutions.add(solution);
             }
         }
-        int solutionCount = solutions.size();
         int[] finalSolution = new int[fragmentLength];
         Int2IntMap countMap;
         for (int posIndex = 0; posIndex < fragmentLength; posIndex++) {
             int maxCount = -1;
             int mode = -1;
             countMap = new Int2IntArrayMap();
-            for (int solutionIndex = 0; solutionIndex < solutionCount; solutionIndex++) {
-                sourceFeature = solutions.get(solutionIndex)[posIndex];
+            for (int[] ints : solutions) {
+                sourceFeature = ints[posIndex];
                 int feature;
-                for (int i = 1; i <= sourceFeature; i<<=1) {
+                for (int i = 1; i <= sourceFeature; i <<= 1) {
                     feature = sourceFeature & i;
                     if (feature == 0) continue;
                     int count = countMap.getOrDefault(feature, 0) + 1;
                     countMap.put(feature, count);
-                    if (count > maxCount){
+                    if (count > maxCount) {
                         mode = feature;
                         maxCount = count;
                     }
@@ -302,32 +280,31 @@ public class Solution {
         int[] solution;
         List<int[]> solutions = new ArrayList<>();
         int sourceFeature, start, end;
-        for (int j = 0; j < candidateSolutions.size(); j++) {
+        for (IntList candidateSolution : candidateSolutions) {
             solution = new int[fragmentLength];
-            for (int k = 0; k < candidateSolutions.get(j).size(); k=k+3) {
-                sourceFeature = candidateSolutions.get(j).get(k);
-                start = candidateSolutions.get(j).get(k+1); // inclusive
-                end = candidateSolutions.get(j).get(k+2); // inclusice
-                Arrays.fill(solution, start, end+1, sourceFeature);
+            for (int k = 0; k < candidateSolution.size(); k = k + 3) {
+                sourceFeature = candidateSolution.getInt(k);
+                start = candidateSolution.getInt(k + 1); // inclusive
+                end = candidateSolution.getInt(k + 2); // inclusice
+                Arrays.fill(solution, start, end + 1, sourceFeature);
             }
             solutions.add(solution);
         }
-        int solutionCount = solutions.size();
         int[] finalSolution = new int[fragmentLength];
         Int2IntMap countMap;
         for (int posIndex = 0; posIndex < fragmentLength; posIndex++) {
             int maxCount = -1;
             int mode = -1;
             countMap = new Int2IntArrayMap();
-            for (int solutionIndex = 0; solutionIndex < solutionCount; solutionIndex++) {
-                sourceFeature = solutions.get(solutionIndex)[posIndex];
+            for (int[] ints : solutions) {
+                sourceFeature = ints[posIndex];
                 int feature;
-                for (int i = 1; i <= sourceFeature; i<<=1) {
+                for (int i = 1; i <= sourceFeature; i <<= 1) {
                     feature = sourceFeature & i;
                     if (feature == 0) continue;
                     int count = countMap.getOrDefault(feature, 0) + 1;
                     countMap.put(feature, count);
-                    if (count > maxCount){
+                    if (count > maxCount) {
                         mode = feature;
                         maxCount = count;
                     }
@@ -365,19 +342,18 @@ public class Solution {
         return sizes;
     }
 
-    public static int[][] reverseSrcGenotype(int[][] srcGenotype){
-        int[][] reverseGenotype = new int[srcGenotype.length][];
-        for (int i = 0; i < reverseGenotype.length; i++) {
-            reverseGenotype[i] = new int[srcGenotype[0].length];
-            Arrays.fill(reverseGenotype[i], -1);
+    public static BitSet[] reverseSrcGenotype(BitSet[] srcGenotype, int seqLen){
+        BitSet[] reversedSrcGenotype = new BitSet[srcGenotype.length];
+        for (int i = 0; i < srcGenotype.length; i++) {
+            reversedSrcGenotype[i] = new BitSet(seqLen);
         }
 
         for (int i = 0; i < srcGenotype.length; i++) {
-            for (int j = 0; j < srcGenotype[i].length; j++) {
-                reverseGenotype[i][srcGenotype[i].length-1-j]=srcGenotype[i][j];
+            for (int j = 0; j < seqLen; j++) {
+                reversedSrcGenotype[i].set(seqLen-1-j, srcGenotype[i].get(j));
             }
         }
-        return reverseGenotype;
+        return reversedSrcGenotype;
     }
 
     /**
@@ -385,11 +361,10 @@ public class Solution {
      * @param genotype genotype
      * @return 反向序列
      */
-    public static int[] reverseGenotype(int[] genotype){
-        int[] reverseGenotype = new int[genotype.length];
-        Arrays.fill(reverseGenotype, -1);
-        for (int i = 0; i < genotype.length; i++) {
-            reverseGenotype[genotype.length-1-i]=genotype[i];
+    public static BitSet reverseGenotype(BitSet genotype, int seqLen){
+        BitSet reverseGenotype = new BitSet(seqLen);
+        for (int i = 0; i < seqLen; i++) {
+            reverseGenotype.set(seqLen-1-i, genotype.get(i));
         }
         return reverseGenotype;
     }
@@ -431,21 +406,20 @@ public class Solution {
             }
         }
 
-        int solutionCount = solutionList2.size();
         List<IntList> forwardSolutions = new ArrayList<>();
         IntList maxTargetSourceCumLenSolution, solutionRes;
         int fragmentLen = solutionList2.get(0).getInt(1)+1;
         IntList introgressedFeatureList = Source.getSingleSourceFeatureList();
         introgressedFeatureList.rem(1);
-        for (int solutionIndex = 0; solutionIndex < solutionCount; solutionIndex++) {
-            maxTargetSourceCumLenSolution = solutionList2.get(solutionIndex);
+        for (IntList integers : solutionList2) {
+            maxTargetSourceCumLenSolution = integers;
             solutionRes = new IntArrayList();
             int sourceFeature, start, end;
-            for (int i = maxTargetSourceCumLenSolution.size()-1; i > 0; i=i-3) {
-                sourceFeature = maxTargetSourceCumLenSolution.getInt(i-2);
+            for (int i = maxTargetSourceCumLenSolution.size() - 1; i > 0; i = i - 3) {
+                sourceFeature = maxTargetSourceCumLenSolution.getInt(i - 2);
                 start = maxTargetSourceCumLenSolution.getInt(i);
-                end = maxTargetSourceCumLenSolution.getInt(i-1);
-//                if (introgressedFeatureList.contains(sourceFeature) && (end-start+1) < fragmentLen/20){
+                end = maxTargetSourceCumLenSolution.getInt(i - 1);
+//                if (introgressedFeatureList.contains(sourceFeature) && (end-start+1) < fragmentLen/5){
 //                    sourceFeature = 1; // 片段过短, 可能是ILS, 因此设为native ancestry
 //                }
                 solutionRes.add(sourceFeature);
@@ -486,22 +460,21 @@ public class Solution {
                 solutionList2.add(solutionList.get(i));
             }
         }
-        int solutionCount = solutionList2.size();
         List<IntList> reverseSolutions = new ArrayList<>();
         IntList solutionRes;
         IntList maxTargetSourceCumLenSolution;
         int seqLen = solutionList2.get(0).getInt(1) + 1;
         IntList introgressedFeatureList = Source.getSingleSourceFeatureList();
         introgressedFeatureList.rem(1);
-        for (int solutionIndex = 0; solutionIndex < solutionCount; solutionIndex++) {
+        for (IntList integers : solutionList2) {
             solutionRes = new IntArrayList();
-            maxTargetSourceCumLenSolution = solutionList2.get(solutionIndex);
+            maxTargetSourceCumLenSolution = integers;
             int sourceFeature, start, end;
-            for (int i = 0; i < maxTargetSourceCumLenSolution.size(); i=i+3) {
+            for (int i = 0; i < maxTargetSourceCumLenSolution.size(); i = i + 3) {
                 sourceFeature = maxTargetSourceCumLenSolution.getInt(i);
-                start = seqLen-1-maxTargetSourceCumLenSolution.getInt(i+1);
-                end = seqLen-1-maxTargetSourceCumLenSolution.getInt(i+2);
-//                if (introgressedFeatureList.contains(sourceFeature) && (end-start+1) < seqLen/20){
+                start = seqLen - 1 - maxTargetSourceCumLenSolution.getInt(i + 1);
+                end = seqLen - 1 - maxTargetSourceCumLenSolution.getInt(i + 2);
+//                if (introgressedFeatureList.contains(sourceFeature) && (end-start+1) < seqLen/5){
 //                    sourceFeature = 1; // 片段过短, 可能是ILS, 因此设为native ancestry
 //                }
                 solutionRes.add(sourceFeature);
