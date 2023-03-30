@@ -766,7 +766,7 @@ public class GenotypeTable {
      *                                               dim1 is different window, same index as windowStartIndexArray,
      *                                               dim2 is taxon index of admixed population,
      *                                               dim3 is population index of native_introgressed populations
-     * @return grid source, dim1 is admixed taxon index, dim2 is window index
+     * @return grid source feature, dim1 is admixed taxon index, dim2 is window index
      */
     public static int[][] calculateSource(double[][][] fd_windows_admixed,
                                           double[][] dxy_pairwise_nativeIntrogressed,
@@ -1188,6 +1188,166 @@ public class GenotypeTable {
         }
         return localAncestry;
     }
+
+    /**
+     *
+     * @param windowSize The unit of window size is one variant, not base pairs (bp)
+     * @param stepSize The unit of step size is one variant, not base pairs (bp)
+     * @param taxaGroupFile taxaGroupFile
+     * @param ancestralAlleleBitSet dim1 is genotype(haploid), dim2 is missing.
+     * 1 in ancestralAlleleBitSet represent alternative allele is ancestral allele.
+     * @param conjunctionNum conjunctionNum
+     * @param switchCostScore switchCostScore
+     * @param threadsNum threadsNum
+     * @return BitSet[][] local ancestry, dim1 is admixed taxon index, dim2 is n_way admixture, index equal Source.index
+     */
+    public BitSet[][] calculateLocalAncestry_singleThread_extend(int windowSize, int stepSize, String taxaGroupFile,
+                                                          BitSet[] ancestralAlleleBitSet, int conjunctionNum,
+                                                          double switchCostScore, int maxSolutionCount, int threadsNum){
+        int variantsNum = this.getSiteNumber();
+        TaxaGroup taxaGroup = TaxaGroup.buildFrom(taxaGroupFile);
+        int n_wayAdmixture = taxaGroup.getIntrogressedPopTaxa().length + 1;
+
+        int[] admixedTaxaIndices = this.getTaxaIndices(taxaGroup.getTaxaOf(Source.ADMIXED));
+        int[] nativeTaxaIndices = this.getTaxaIndices(taxaGroup.getTaxaOf(Source.NATIVE));
+        int[][] introgressedPopTaxaIndices = this.getTaxaIndices(taxaGroup.getIntrogressedPopTaxa());
+        int[][] native_admixed_introgressed_popIndex = this.getTaxaIndices(taxaGroup.getNative_admixed_introgressed_Taxa());
+        int[] native_introgressed_popIndex = this.getTaxaIndices(taxaGroup.getTaxaOf_native_introgressed());
+
+        int[] windowStartIndexArray = GenotypeTable.getWindowStartIndex(windowSize, stepSize, variantsNum);
+        double[][][] dxy_windows_admixed = this.calculateAdmixedDxy(admixedTaxaIndices, nativeTaxaIndices,
+                introgressedPopTaxaIndices, windowStartIndexArray, windowSize);
+        double[][] dxy_pairwise_nativeIntrogressed = this.calculatePairwiseDxy(nativeTaxaIndices,introgressedPopTaxaIndices,
+                windowStartIndexArray, windowSize);
+
+        double[][] dafs = this.calculateDaf(threadsNum, native_admixed_introgressed_popIndex, ancestralAlleleBitSet);
+        double[] dafs_native = dafs[0];
+        double[][] dafs_admixed = new double[taxaGroup.getTaxaOf(Source.ADMIXED).size()][];
+        System.arraycopy(dafs, 1, dafs_admixed, 0, taxaGroup.getTaxaOf(Source.ADMIXED).size());
+        double[][] dafs_introgressed = new double[taxaGroup.getIntrogressedPopTaxa().length][];
+        System.arraycopy(dafs, taxaGroup.getTaxaOf(Source.ADMIXED).size()+1, dafs_introgressed, 0,
+                taxaGroup.getIntrogressedPopTaxa().length);
+
+        double[][][] fd = GenotypeTable.calculate_fd(threadsNum, dafs_native, dafs_admixed, dafs_introgressed,
+                windowStartIndexArray,
+                windowSize, variantsNum);
+
+        double[][] d_f_z_sd = this.get_D_f_z_sd(threadsNum, taxaGroup, ancestralAlleleBitSet, false);
+        double[] f_upperLimit = GenotypeTable.get_upperLimit_f(d_f_z_sd);
+        int[][] gridSource = GenotypeTable.calculateSource(fd, dxy_pairwise_nativeIntrogressed,
+                dxy_windows_admixed, f_upperLimit);
+
+        List<int[]>[] successiveWindow_taxon = GenotypeTable.getSuccessiveIntrogressionWindow(gridSource, conjunctionNum);
+        BitSet[] queriesGenotype = this.getTaxaGenotype(admixedTaxaIndices);
+        BitSet[] sourcesGenotype = this.getTaxaGenotype(native_introgressed_popIndex);
+        List<String> sourceTaxaList = this.getTaxaList(native_introgressed_popIndex);
+        Map<String, Source> taxaSourceMap = taxaGroup.getTaxaSourceMap(sourceTaxaList);
+        BitSet[][] localAncestry = new BitSet[admixedTaxaIndices.length][];
+        for (int i = 0; i < admixedTaxaIndices.length; i++) {
+            localAncestry[i] = new BitSet[n_wayAdmixture];
+            for (int j = 0; j < localAncestry[i].length; j++) {
+                localAncestry[i][j] = new BitSet();
+            }
+            // initialize native ancestry to 1
+            localAncestry[i][0].set(0, variantsNum);
+        }
+        int gridStart, gridEnd;
+        int gridNum = gridSource[0].length;
+        for (int admixedTaxonIndex = 0; admixedTaxonIndex < admixedTaxaIndices.length; admixedTaxonIndex++) {
+            for (int gridIndex = 0; gridIndex < successiveWindow_taxon[admixedTaxonIndex].size(); gridIndex++) {
+//                int admixedTaxonIndex = i;
+//                int gridIndex = j;
+                gridStart = successiveWindow_taxon[admixedTaxonIndex].get(gridIndex)[0]; // inclusive
+                gridEnd = successiveWindow_taxon[admixedTaxonIndex].get(gridIndex)[1]; // inclusive
+                localAncestry = GenotypeTable.getLocalAnc_extend(localAncestry, gridStart, gridEnd, gridNum,
+                        windowStartIndexArray,
+                        queriesGenotype, sourcesGenotype, windowSize, variantsNum, admixedTaxonIndex, switchCostScore,
+                        maxSolutionCount, sourceTaxaList, taxaSourceMap);
+            }
+        }
+        return localAncestry;
+    }
+
+    /**
+     *
+     * @param localAncestry
+     * @param gridStart inclusive
+     * @param gridEnd inclusive
+     * @param gridNum
+     * @param windowStartIndexArray
+     * @param queriesGenotype
+     * @param sourcesGenotype
+     * @param windowSize
+     * @param variantsNum
+     * @param admixedTaxonIndex
+     * @param switchCostScore
+     * @param maxSolutionCount
+     * @param sourceTaxaList
+     * @param taxaSourceMap
+     * @return
+     */
+    public static BitSet[][] getLocalAnc_extend(BitSet[][] localAncestry, int gridStart, int gridEnd, int gridNum,
+                                                int[] windowStartIndexArray, BitSet[] queriesGenotype, BitSet[] sourcesGenotype, int windowSize, int variantsNum,
+                                                int admixedTaxonIndex, double switchCostScore, int maxSolutionCount, List<String> sourceTaxaList,
+                                                Map<String, Source> taxaSourceMap) {
+        Stack<int[]> tasks = new Stack<>(); // 待处理任务栈
+        tasks.push(new int[] {gridStart, gridEnd}); // 将原始任务推入栈中
+        int count = 0;
+        while (!tasks.empty()) {
+            int[] task = tasks.pop();
+            int start = task[0];
+            int end = task[1];
+
+            int fragmentStartIndex = windowStartIndexArray[start]; // inclusive
+            int fragmentEndIndex = Math.min(windowStartIndexArray[end] + windowSize, variantsNum); // exclusive
+
+            BitSet queryFragment = queriesGenotype[admixedTaxonIndex].get(fragmentStartIndex, fragmentEndIndex);
+            BitSet[] sourcesFragment = new BitSet[sourcesGenotype.length];
+            for (int sourceIndex = 0; sourceIndex < sourcesGenotype.length; sourceIndex++) {
+                sourcesFragment[sourceIndex] = sourcesGenotype[sourceIndex].get(fragmentStartIndex, fragmentEndIndex);
+            }
+            int fragmentLen = fragmentEndIndex - fragmentStartIndex;
+            int[] solution = Solution.getSolution(sourcesFragment, queryFragment,
+                    fragmentLen, switchCostScore, sourceTaxaList, taxaSourceMap, maxSolutionCount);
+            if (solution.length == 0) break;
+            if ((solution[0] != 1) || (solution[fragmentLen - 1] != 1)) {
+                start = (solution[0] == 1) ? start : Math.max(0, start - 1);
+                end = (solution[fragmentLen - 1] == 1) ? end : Math.min(end + 1, gridNum - 1);
+                if ((start == 0) && (end == (gridNum - 1))) break;
+                tasks.push(new int[] {start, end}); // 将拆分后的任务推入栈中
+                count++;
+                if (count > 1){
+                    Source source;
+                    int intervalStartIndex;
+                    BitSet localAncestryFragment;
+                    for (int i = 0; i < fragmentLen; i++) {
+                        source = Source.getInstanceFromFeature(solution[i]).get();
+                        intervalStartIndex = i + fragmentStartIndex; // inclusive
+                        if (source.equals(Source.NATIVE)) continue;
+                        localAncestryFragment = localAncestry[admixedTaxonIndex][source.getIndex()];
+                        localAncestryFragment.set(intervalStartIndex);
+                        localAncestry[admixedTaxonIndex][0].set(intervalStartIndex, false);
+                    }
+                    break;
+                }
+            } else {
+                Source source;
+                int intervalStartIndex;
+                BitSet localAncestryFragment;
+                for (int i = 0; i < fragmentLen; i++) {
+                    source = Source.getInstanceFromFeature(solution[i]).get();
+                    intervalStartIndex = i + fragmentStartIndex; // inclusive
+                    if (source.equals(Source.NATIVE)) continue;
+                    localAncestryFragment = localAncestry[admixedTaxonIndex][source.getIndex()];
+                    localAncestryFragment.set(intervalStartIndex);
+                    localAncestry[admixedTaxonIndex][0].set(intervalStartIndex, false);
+                }
+            }
+        }
+
+        return localAncestry;
+    }
+
 
     /**
      *
