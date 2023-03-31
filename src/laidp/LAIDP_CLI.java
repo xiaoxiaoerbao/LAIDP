@@ -154,17 +154,16 @@ public class LAIDP_CLI {
     }
 
     public static void main(String[] args) {
-        String genotypeFile = "/Users/xudaxing/Desktop/LAIDP_development/two_way_ancient_test2/003_simulation/D001.vcf";
-        int windowSize = 200;
-        int stepSize = 100;
-        String taxaGroupFile = "/Users/xudaxing/Desktop/LAIDP_development/two_way_ancient_test2/004_runner/laidp/D001.taxaGroup.txt";
-        String ancestryAllele = "simulation";
-        int conjunctionNum = 2;
-        double switchCostScore = 1.5;
-        int maxSolutionCount = 32;
-        String localAnceOutFile = "/Users/xudaxing/Desktop/LAIDP_development/two_way_ancient_test2/004_runner/laidp" +
-                "/D001.localAnc_2.txt";
-        int threadsNum = 2;
+//        String genotypeFile = "/Users/xudaxing/Desktop/LAIDP_development/two_way_ancient_test2/003_simulation/D001.vcf";
+//        int windowSize = 200;
+//        int stepSize = 100;
+//        String taxaGroupFile = "/Users/xudaxing/Desktop/LAIDP_development/two_way_ancient_test2/004_runner/laidp/D001.taxaGroup.txt";
+//        String ancestryAllele = "simulation";
+//        int conjunctionNum = 2;
+//        double switchCostScore = 1.5;
+//        int maxSolutionCount = 32;
+//        String localAnceOutFile = "/Users/xudaxing/Desktop/LAIDP_development/two_way_ancient_test2/004_runner/laidp/D001.localAnc2.txt";
+//        int threadsNum = 2;
 ////
 //
 //        String genotypeFile = args[0];
@@ -177,13 +176,13 @@ public class LAIDP_CLI {
 //        int maxSolutionCount = Integer.parseInt(args[7]);
 //        String localAnceOutFile = args[8];
 //        int threadsNum = Integer.parseInt(args[9]);
+//
+//
+////////
+//        GenotypeTable.run_LAIDP(genotypeFile, windowSize, stepSize, taxaGroupFile, ancestryAllele, conjunctionNum,
+//                switchCostScore, maxSolutionCount, localAnceOutFile, threadsNum);
 
-
-//////
-        GenotypeTable.run_LAIDP(genotypeFile, windowSize, stepSize, taxaGroupFile, ancestryAllele, conjunctionNum,
-                switchCostScore, maxSolutionCount, localAnceOutFile, threadsNum);
-
-//        LAIDP_CLI.startFromCLI(args);
+        LAIDP_CLI.startFromCLI(args);
     }
 
 

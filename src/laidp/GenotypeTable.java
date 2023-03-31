@@ -1418,8 +1418,9 @@ public class GenotypeTable {
                     if (sourceIndex == 0) continue;
                     int tractNum = localTract[admixedTaxonIndex][sourceIndex].size();
                     for (int tractIndex = 0; tractIndex < tractNum; tractIndex++) {
+                        sb.setLength(0);
                         sb.append(admixedTaxaList.get(admixedTaxonIndex)).append("\t");
-                        sb.append(Source.getInstanceFromIndex(sourceIndex)).append("\t");
+                        sb.append(Source.getInstanceFromIndex(sourceIndex).get()).append("\t");
                         sb.append(localTract[admixedTaxonIndex][sourceIndex].get(tractIndex)[0]).append("\t");
                         sb.append(localTract[admixedTaxonIndex][sourceIndex].get(tractIndex)[1]);
                         bw.write(sb.toString());
@@ -1708,15 +1709,17 @@ public class GenotypeTable {
                                  double switchCostScore, int maxSolutionCount, String localAnceOutFile, int threadsNum){
         GenotypeTable genotypeTable = new GenotypeTable(genotypeFile);
         BitSet[] ancestralAlleleBitSet = genotypeTable.getAncestralAlleleBitSet(ancestryAllele);
-//        BitSet[][] localAnc = genotypeTable.calculateLocalAncestry(windowSize, stepSize, taxaGroupFile,
-//                ancestralAlleleBitSet, conjunctionNum, switchCostScore, maxSolutionCount, threadsNum);
-        BitSet[][] localAnc = genotypeTable.calculateLocalAncestry_singleThread(windowSize, stepSize, taxaGroupFile,
+        BitSet[][] localAnc = genotypeTable.calculateLocalAncestry(windowSize, stepSize, taxaGroupFile,
                 ancestralAlleleBitSet, conjunctionNum, switchCostScore, maxSolutionCount, threadsNum);
+//        BitSet[][] localAnc = genotypeTable.calculateLocalAncestry_singleThread(windowSize, stepSize, taxaGroupFile,
+//                ancestralAlleleBitSet, conjunctionNum, switchCostScore, maxSolutionCount, threadsNum);
 
 //        BitSet[][] localAnc = genotypeTable.calculateLocalAncestry_only_fd(windowSize, stepSize, taxaGroupFile,
 //                ancestralAlleleBitSet, conjunctionNum, switchCostScore, maxSolutionCount, threadsNum);
 //        BitSet[][] localAnc = genotypeTable.calculateLocalAncestry_loterLike(windowSize, stepSize, taxaGroupFile,
-//                ancestralAlleleBitSet, conjunctionNum, switchCostScore, maxSolutionCount, threadsNum);
+//                ancestralAlleleBitSet, conjunctionNum, threadsNum);
+//        BitSet[][] localAnc = genotypeTable.calculateLocalAncestry_singleThread_extend(windowSize, stepSize,
+//                taxaGroupFile, ancestralAlleleBitSet, conjunctionNum, switchCostScore, maxSolutionCount, threadsNum);
         genotypeTable.write_localAncestry(localAnc, localAnceOutFile, taxaGroupFile);
     }
 
