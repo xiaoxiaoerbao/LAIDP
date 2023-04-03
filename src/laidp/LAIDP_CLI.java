@@ -154,16 +154,16 @@ public class LAIDP_CLI {
     }
 
     public static void main(String[] args) {
-//        String genotypeFile = "/Users/xudaxing/Desktop/LAIDP_development/two_way_ancient_test2/003_simulation/D001.vcf";
-//        int windowSize = 200;
-//        int stepSize = 100;
-//        String taxaGroupFile = "/Users/xudaxing/Desktop/LAIDP_development/two_way_ancient_test2/004_runner/laidp/D001.taxaGroup.txt";
-//        String ancestryAllele = "simulation";
-//        int conjunctionNum = 2;
-//        double switchCostScore = 1.5;
-//        int maxSolutionCount = 32;
-//        String localAnceOutFile = "/Users/xudaxing/Desktop/LAIDP_development/two_way_ancient_test2/004_runner/laidp/D001.localAnc2.txt";
-//        int threadsNum = 2;
+        String genotypeFile = "/Users/xudaxing/Desktop/LAIDP_development/temp/003_simulation/D003.vcf";
+        int windowSize = 150;
+        int stepSize = 75;
+        String taxaGroupFile = "/Users/xudaxing/Desktop/LAIDP_development/temp/004_runner/laidp/D003.taxaGroup.txt";
+        String ancestryAllele = "simulation";
+        int conjunctionNum = 2;
+        double switchCostScore = 1.5;
+        int maxSolutionCount = 8;
+        String localAnceOutFile = "/Users/xudaxing/Desktop/LAIDP_development/temp/004_runner/laidp/D003.localAnc.txt";
+        int threadsNum = 2;
 ////
 //
 //        String genotypeFile = args[0];
@@ -179,10 +179,10 @@ public class LAIDP_CLI {
 //
 //
 ////////
-//        GenotypeTable.run_LAIDP(genotypeFile, windowSize, stepSize, taxaGroupFile, ancestryAllele, conjunctionNum,
-//                switchCostScore, maxSolutionCount, localAnceOutFile, threadsNum);
+        GenotypeTable.run_LAIDP(genotypeFile, windowSize, stepSize, taxaGroupFile, ancestryAllele, conjunctionNum,
+                switchCostScore, maxSolutionCount, localAnceOutFile, threadsNum);
 
-        LAIDP_CLI.startFromCLI(args);
+//        LAIDP_CLI.startFromCLI(args);
     }
 
 
