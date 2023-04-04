@@ -307,9 +307,10 @@ public class Solution {
         }
         int[] finalSolution = new int[fragmentLength];
         Int2IntMap countMap;
+        IntSet modeSet;
         for (int posIndex = 0; posIndex < fragmentLength; posIndex++) {
             int maxCount = -1;
-            int mode = -1;
+            modeSet = new IntArraySet();
             countMap = new Int2IntArrayMap();
             for (int[] ints : solutions) {
                 sourceFeature = ints[posIndex];
@@ -320,12 +321,20 @@ public class Solution {
                     int count = countMap.getOrDefault(feature, 0) + 1;
                     countMap.put(feature, count);
                     if (count > maxCount) {
-                        mode = feature;
                         maxCount = count;
+                        modeSet.clear();
+                        modeSet.add(feature);
+                    }else if (count == maxCount){
+                        modeSet.add(feature);
                     }
                 }
             }
-            finalSolution[posIndex] = mode;
+            if (modeSet.size() == 1){
+                finalSolution[posIndex] = modeSet.iterator().nextInt();
+            }else {
+                // when source feature contain multiple source, it will be set to native ancestry
+                finalSolution[posIndex] = 1;
+            }
         }
 
         return finalSolution;
