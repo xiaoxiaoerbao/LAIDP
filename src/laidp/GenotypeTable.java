@@ -1408,7 +1408,7 @@ public class GenotypeTable {
         }
 
         try (BufferedWriter bw = IOTool.getWriter(outFile)) {
-            bw.write("AdmixedIndividual\tIntrogressedPopulation\tStart\tEnd");
+            bw.write("AdmixedHaplotype\tAncestry\tStart\tEnd");
             bw.newLine();
             StringBuilder sb = new StringBuilder();
             TaxaGroup taxaGroup = TaxaGroup.buildFrom(taxaGroupFile);
