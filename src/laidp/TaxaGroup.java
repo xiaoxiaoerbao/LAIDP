@@ -29,7 +29,7 @@ public class TaxaGroup {
             br.readLine();
             while ((line=br.readLine())!=null){
                 temp = PStringUtils.fastSplit(line);
-                if (temp.get(2).equals("admixed")) continue;
+//                if (temp.get(2).equals("admixed")) continue;
                 taxaList.add(temp.get(0));
                 popList.add(temp.get(1));
                 sourceList.add(Source.valueOf(temp.get(2)));
@@ -46,9 +46,7 @@ public class TaxaGroup {
 
     public List<String> getPop(){
         Set<String> popSet = new HashSet<>();
-        for (String pop : this.popList){
-            popSet.add(pop);
-        }
+        popSet.addAll(this.popList);
         List<String> popList = new ArrayList<>(popSet);
         Collections.sort(popList);
         return popList;
