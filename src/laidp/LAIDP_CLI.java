@@ -20,7 +20,7 @@ public class LAIDP_CLI {
     String genotypeFile;
     String taxaGroupFile;
     String ancestralAllele;
-    String localAnceOutFile;
+    String localAnceOutFilePrefix;
 
 
     /**
@@ -36,6 +36,7 @@ public class LAIDP_CLI {
     int threadsNum;
 
     boolean ifTract=false;
+    boolean ancestryProportion = false;
 
     public LAIDP_CLI(org.apache.commons.cli.CommandLine line){
         this.genotypeFile=line.getOptionValue("g");
@@ -66,7 +67,7 @@ public class LAIDP_CLI {
         }else {
             this.maxSolutionCount = 32;
         }
-        this.localAnceOutFile = line.getOptionValue("out");
+        this.localAnceOutFilePrefix = line.getOptionValue("out");
         if (line.hasOption("t")){
             this.threadsNum = Integer.parseInt(line.getOptionValue("t"));
         }else {
@@ -75,6 +76,9 @@ public class LAIDP_CLI {
         if (line.hasOption("tract")){
             this.ifTract = true;
         }
+        if (line.hasOption("ancestryProportion")){
+            this.ancestryProportion=true;
+        }
     }
 
     public void startRun(){
@@ -82,10 +86,11 @@ public class LAIDP_CLI {
         BitSet[] ancestralAlleleBitSet = genotypeTable.getAncestralAlleleBitSet(ancestralAllele);
         BitSet[][] localAnc = genotypeTable.calculateLocalAncestry(windowSize, stepSize, taxaGroupFile,
                 ancestralAlleleBitSet, conjunctionNum, switchCostScore, maxSolutionCount, threadsNum);
+        genotypeTable.write_localAncestry(localAnc, localAnceOutFilePrefix+".lai", taxaGroupFile);
         if (ifTract){
-            genotypeTable.write_tract(localAnc, taxaGroupFile, localAnceOutFile);
-        }else {
-            genotypeTable.write_localAncestry(localAnc, localAnceOutFile, taxaGroupFile);
+            genotypeTable.write_tract(localAnc, taxaGroupFile, localAnceOutFilePrefix+".tract");
+        }if (ancestryProportion){
+            genotypeTable.write_localAncestryProportion(localAnc, localAnceOutFilePrefix+".proportion");
         }
     }
 
@@ -105,9 +110,11 @@ public class LAIDP_CLI {
                 " " +
                 "switching occurs");
         Option maxSolutionCount = new Option("maxSolution","maxSolutionCount",true, "upper bound of the candidate solution");
-        Option localAncestyOutFile = new Option("out", "outFile",true, "prefix of outfile");
+        Option localAncestryOutFilePrefix = new Option("out", "prefix of outFile",true, "prefix of outfile");
         Option threadsNum = new Option("t", "threadsNum",true, "thread number");
         Option tract = new Option("tract","introgressed tract", false, "output in the form of tract");
+        Option ancestryProportion = new Option("ancestryProportion", "ancestry proportion", false, "ancestry " +
+                "proportion per site");
         Options options = new Options();
         options.addOption(genotypeFile);
         options.addOption(windowSize);
@@ -117,9 +124,10 @@ public class LAIDP_CLI {
         options.addOption(conjunctionNum);
         options.addOption(switchCostScore);
         options.addOption(maxSolutionCount);
-        options.addOption(localAncestyOutFile);
+        options.addOption(localAncestryOutFilePrefix);
         options.addOption(threadsNum);
         options.addOption(tract);
+        options.addOption(ancestryProportion);
         return options;
     }
 
@@ -127,7 +135,7 @@ public class LAIDP_CLI {
         return "java -jar LAIDP.jar -g genotypeFile" + " " +
                 "-taxaGroup taxaGroupFile" + " " +
                 "-ancestral ancestral" + " " +
-                "-out outFile";
+                "-out prefix";
     }
 
     private static String getHeader(){

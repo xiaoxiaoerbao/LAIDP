@@ -1704,6 +1704,46 @@ public class GenotypeTable {
         }
     }
 
+    public void write_localAncestryProportion(BitSet[][] localAncestry, String localAncestryOutFile){
+        int variantsNum = this.getSiteNumber();
+        try (BufferedWriter bw = IOTool.getWriter(localAncestryOutFile)) {
+            int taxaNum = localAncestry.length;
+            int sourceNum = localAncestry[0].length;
+            StringBuilder sb = new StringBuilder();
+            sb.append("pos").append("\t");
+            for (int i = 0; i < sourceNum; i++) {
+                sb.append(Source.getInstanceFromIndex(i).get().name()).append("\t");
+            }
+            sb.deleteCharAt(sb.length()-1);
+            bw.write(sb.toString());
+            bw.newLine();
+            double ancestry, proportion;
+            int pos;
+            NumberFormat numberFormat = NumberFormat.getNumberInstance();
+            numberFormat.setGroupingUsed(false);
+            numberFormat.setMaximumFractionDigits(5);
+            for (int variantIndex = 0; variantIndex < variantsNum; variantIndex++) {
+                sb.setLength(0);
+                pos = this.getSnps()[variantIndex].getPos();
+                sb.append(pos).append("\t");
+                for (int sourceIndex = 0; sourceIndex < sourceNum; sourceIndex++) {
+                    ancestry = 0;
+                    for (BitSet[] bitSets : localAncestry) {
+                        ancestry += bitSets[sourceIndex].get(variantIndex) ? 1 : 0;
+                    }
+                    proportion = ancestry/taxaNum;
+                    sb.append(numberFormat.format(proportion)).append("\t");
+                }
+                sb.deleteCharAt(sb.length()-1);
+                bw.write(sb.toString());
+                bw.newLine();
+            }
+            bw.flush();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static void run_LAIDP(String genotypeFile, int windowSize, int stepSize, String taxaGroupFile,
                                  String ancestryAllele, int conjunctionNum,
                                  double switchCostScore, int maxSolutionCount, String localAnceOutFile, int threadsNum){
@@ -1721,6 +1761,7 @@ public class GenotypeTable {
 //        BitSet[][] localAnc = genotypeTable.calculateLocalAncestry_singleThread_extend(windowSize, stepSize,
 //                taxaGroupFile, ancestralAlleleBitSet, conjunctionNum, switchCostScore, maxSolutionCount, threadsNum);
         genotypeTable.write_localAncestry(localAnc, localAnceOutFile, taxaGroupFile);
+//        genotypeTable.write_localAncestryProportion(localAnc, localAnceOutFile);
     }
 
     /**
