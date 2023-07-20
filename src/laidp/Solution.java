@@ -218,6 +218,7 @@ public class Solution {
                     Solution.reverseGenotype(queryGenotypeFragment,fragmentLength),switchCostScore, fragmentLength, srcIndiList,
                             taxaSourceMap);
             reverseSolution = Solution.coalescentReverse(reverseCandidateSolution);
+            if (reverseSolution.length==0) return forwardSolution;
             for (int i = seqLen - 1; i > -1; i--) {
                 if (reverseSolution[i]==1){
                     forwardSolution[i] = 1;
